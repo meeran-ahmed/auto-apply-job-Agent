@@ -28,7 +28,12 @@ share/python-wheels/
 MANIFEST
 chrome_profile/*
 data_folder/*
+!data_folder/*.template
+!data_folder/secrets.yaml.template
+!data_folder/plain_text_resume.yaml.template
+!data_folder/config.yaml.template
 answers.json
+scratch/
 # PyInstaller
 # Usually these files are written by a python script from a template
 # before PyInstaller builds the exe, so as to inject date/other infos into it.

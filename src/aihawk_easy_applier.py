@@ -5,7 +5,9 @@ import random
 import re
 import time
 import traceback
+from pathlib import Path
 from typing import List, Optional, Any, Tuple
+import yaml
 
 from httpx import HTTPStatusError
 from reportlab.lib.pagesizes import A4
@@ -23,17 +25,28 @@ from loguru import logger
 
 
 class AIHawkEasyApplier:
-    def __init__(self, driver: Any, resume_dir: Optional[str], set_old_answers: List[Tuple[str, str, str]],
+    def __init__(self, driver: Any, resume_dir: Optional[Any], set_old_answers: List[Tuple[str, str, str]],
                  gpt_answerer: Any, resume_generator_manager):
         logger.debug("Initializing AIHawkEasyApplier")
-        if resume_dir is None or not os.path.exists(resume_dir):
-            resume_dir = None
         self.driver = driver
-        self.resume_path = resume_dir
+        if resume_dir:
+            p = Path(resume_dir).resolve()
+            self.resume_path = p if p.exists() else None
+        else:
+            self.resume_path = None
         self.set_old_answers = set_old_answers
         self.gpt_answerer = gpt_answerer
         self.resume_generator_manager = resume_generator_manager
         self.all_data = self._load_questions_from_json()
+
+        self.resume_yaml_data = {}
+        try:
+            resume_yaml_path = Path("data_folder/plain_text_resume.yaml")
+            if resume_yaml_path.exists():
+                with open(resume_yaml_path, 'r', encoding='utf-8') as yf:
+                    self.resume_yaml_data = yaml.safe_load(yf) or {}
+        except Exception as e:
+            logger.warning(f"Could not load plain_text_resume.yaml: {e}")
 
         logger.debug("AIHawkEasyApplier initialized successfully")
 
@@ -158,12 +171,17 @@ class AIHawkEasyApplier:
                 'xpath': '//button[contains(@class, "jobs-apply-button") and contains(., "Easy Apply")]'
             },
             {
-                'description': "'aria-label' containing 'Easy Apply to'",
-                'xpath': '//button[contains(@aria-label, "Easy Apply to")]'
+                'description': "button with text Easy Apply anywhere in content",
+                'find_elements': True,
+                'xpath': '//button[contains(., "Easy Apply")]'
             },
             {
-                'description': "button text search",
-                'xpath': '//button[contains(text(), "Easy Apply") or contains(text(), "Apply now")]'
+                'description': "'aria-label' containing 'Easy Apply to'",
+                'xpath': '//button[contains(@aria-label, "Easy Apply to") or contains(@aria-label, "Easy Apply")]'
+            },
+            {
+                'description': "jobs-apply-button class",
+                'xpath': '//button[contains(@class, "jobs-apply-button")]'
             }
         ]
 
@@ -274,27 +292,72 @@ class AIHawkEasyApplier:
 
     def _fill_application_form(self, job):
         logger.debug(f"Filling out application form for job: {job}")
-        while True:
+        step_count = 0
+        max_steps = 15
+        while step_count < max_steps:
+            step_count += 1
             self.fill_up(job)
             if self._next_or_submit():
                 logger.debug("Application form submitted")
-                break
+                return
+        logger.warning(f"Exceeded max steps ({max_steps}) for job application, discarding.")
+        self._discard_application()
 
     def _next_or_submit(self):
         logger.debug("Clicking 'Next' or 'Submit' button")
-        next_button = self.driver.find_element(By.CLASS_NAME, "artdeco-button--primary")
-        button_text = next_button.text.lower()
-        if 'submit application' in button_text:
+        next_button = None
+        selectors = [
+            "//button[contains(@aria-label, 'Submit application') or contains(@aria-label, 'Submit')]",
+            "//button[contains(@aria-label, 'Continue to next step') or contains(@aria-label, 'Review your application')]",
+            "//footer//button[contains(@class, 'artdeco-button--primary')]",
+            "//button[contains(@class, 'artdeco-button--primary')]",
+            "//button[contains(., 'Submit application') or contains(., 'Submit')]",
+            "//button[contains(., 'Next') or contains(., 'Review')]"
+        ]
+        for sel in selectors:
+            btns = self.driver.find_elements(By.XPATH, sel)
+            for b in btns:
+                try:
+                    if b.is_displayed() and b.is_enabled():
+                        next_button = b
+                        break
+                except Exception:
+                    continue
+            if next_button:
+                break
+
+        if not next_button:
+            logger.warning("No Next or Submit button found in modal, concluding step.")
+            return True
+
+        try:
+            self._auto_fill_all_unfilled_fields()
+        except Exception:
+            pass
+
+        button_text = (next_button.text + " " + (next_button.get_attribute("aria-label") or "")).lower()
+        if 'submit application' in button_text or 'submit' in button_text:
             logger.debug("Submit button found, submitting application")
             self._unfollow_company()
-            time.sleep(random.uniform(1.5, 2.5))
+            time.sleep(random.uniform(1.0, 2.0))
             next_button.click()
-            time.sleep(random.uniform(1.5, 2.5))
+            time.sleep(random.uniform(2.5, 4.0))
+            try:
+                dismiss_btn = self.driver.find_element(
+                    By.XPATH,
+                    "//button[contains(@class, 'artdeco-modal__dismiss') or contains(@aria-label, 'Dismiss') or contains(@aria-label, 'Close') or contains(., 'Done')]"
+                )
+                dismiss_btn.click()
+                time.sleep(1)
+            except Exception:
+                pass
             return True
-        time.sleep(random.uniform(1.5, 2.5))
+
+        time.sleep(random.uniform(1.0, 2.0))
         next_button.click()
-        time.sleep(random.uniform(3.0, 5.0))
+        time.sleep(random.uniform(2.5, 4.0))
         self._check_for_errors()
+        return False
 
     def _unfollow_company(self) -> None:
         try:
@@ -309,32 +372,267 @@ class AIHawkEasyApplier:
         logger.debug("Checking for form errors")
         error_elements = self.driver.find_elements(By.CLASS_NAME, 'artdeco-inline-feedback--error')
         if error_elements:
-            logger.error(f"Form submission failed with errors: {error_elements}")
-            raise Exception(f"Failed answering or file upload. {str([e.text for e in error_elements])}")
+            logger.warning(f"Form submission had inline feedback: {[e.text for e in error_elements]}")
 
     def _discard_application(self) -> None:
         logger.debug("Discarding application")
         try:
-            self.driver.find_element(By.CLASS_NAME, 'artdeco-modal__dismiss').click()
-            time.sleep(random.uniform(3, 5))
-            self.driver.find_elements(By.CLASS_NAME, 'artdeco-modal__confirm-dialog-btn')[0].click()
-            time.sleep(random.uniform(3, 5))
+            dismiss_buttons = self.driver.find_elements(
+                By.XPATH,
+                "//button[contains(@class, 'artdeco-modal__dismiss') or contains(@aria-label, 'Dismiss') or contains(@aria-label, 'Close') or contains(@data-test-modal-close-btn, '')]"
+            )
+            if dismiss_buttons:
+                dismiss_buttons[0].click()
+            else:
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
+
+            time.sleep(1.5)
+
+            confirm_buttons = self.driver.find_elements(
+                By.XPATH,
+                "//button[contains(@class, 'artdeco-modal__confirm-dialog-btn') or contains(., 'Discard') or contains(@data-test-dialog-primary-btn, '') or contains(@data-control-name, 'discard_application_confirm_btn')]"
+            )
+            if confirm_buttons:
+                confirm_buttons[0].click()
+                time.sleep(1.5)
         except Exception as e:
             logger.warning(f"Failed to discard application: {e}")
+            try:
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
+            except Exception:
+                pass
+
+    def _auto_fill_all_unfilled_fields(self) -> None:
+        """
+        Scans the current Easy Apply modal for ANY unfilled input, select, radio, or checkbox
+        and deterministically fills them using the user's profile and resume data.
+        """
+        pi = self.resume_yaml_data.get('personal_information', {})
+        phone_num = str(pi.get('phone', '8015186448')).strip()
+        country_name = str(pi.get('country', 'India')).strip()
+        city_name = str(pi.get('city', 'Vaniyambadi')).strip()
+        zip_code = str(pi.get('zip_code', '635751')).strip()
+        portfolio_url = "https://meeran-portfolio.antideploy.app"
+        linkedin_url = str(pi.get('linkedin', 'https://www.linkedin.com/in/meeran-ahmed-r/'))
+        github_url = str(pi.get('github', 'https://github.com/meeranahmed'))
+        email_addr = str(pi.get('email', 'meeranahmed17@gmail.com'))
+
+        # 1. Handle all <select> dropdowns in the modal
+        select_elements = self.driver.find_elements(By.CSS_SELECTOR, ".jobs-easy-apply-content select, [data-test-modal] select, .artdeco-modal select")
+        for sel_el in select_elements:
+            try:
+                if not sel_el.is_displayed():
+                    continue
+                select = Select(sel_el)
+                current_val = select.first_selected_option.text.strip().lower() if select.all_selected_options else ""
+                
+                # If already selected and not a placeholder, skip
+                if current_val and not any(p in current_val for p in ['select an option', 'select', 'choose', 'please']):
+                    continue
+
+                label_text = ""
+                try:
+                    parent = sel_el.find_element(By.XPATH, "ancestor::div[contains(@class, 'form-element') or contains(@class, 'fb-dropdown') or contains(@class, 'grouping') or contains(@class, 'jobs-easy-apply')]")
+                    labels = parent.find_elements(By.TAG_NAME, "label")
+                    if labels:
+                        label_text = labels[0].text.lower()
+                except Exception:
+                    pass
+                if not label_text:
+                    label_text = (sel_el.get_attribute("aria-label") or sel_el.get_attribute("name") or sel_el.get_attribute("id") or "").lower()
+
+                opt_texts = [o.text for o in select.options]
+                matched = False
+
+                # Phone country code
+                if any(k in label_text for k in ['country code', 'phone country', 'phone code']) or any('+91' in o for o in opt_texts):
+                    for o in select.options:
+                        ot = o.text.lower()
+                        if '+91' in o.text or 'india' in ot or 'in (+' in ot or o.get_attribute('value').lower() in ['in', 'ind', '+91']:
+                            select.select_by_visible_text(o.text)
+                            matched = True
+                            logger.debug(f"Selected phone country code: {o.text}")
+                            break
+
+                # Country
+                elif 'country' in label_text:
+                    for o in select.options:
+                        ot = o.text.lower()
+                        if country_name.lower() == ot.strip() or country_name.lower() in ot or o.get_attribute('value').lower() in ['in', 'india']:
+                            select.select_by_visible_text(o.text)
+                            matched = True
+                            logger.debug(f"Selected country: {o.text}")
+                            break
+
+                # Yes / No / authorization questions
+                if not matched:
+                    for o in select.options:
+                        if o.text.strip().lower() in ['yes', 'authorized', 'immediate', 'male']:
+                            select.select_by_visible_text(o.text)
+                            matched = True
+                            break
+
+                # Fallback: select first non-placeholder option
+                if not matched and len(select.options) > 1:
+                    for o in select.options[1:]:
+                        if o.text.strip() and not any(p in o.text.lower() for p in ['select', 'choose']):
+                            select.select_by_visible_text(o.text)
+                            break
+            except Exception as e:
+                logger.debug(f"Select element handling note: {e}")
+
+        # 2. Handle all <input> and <textarea> elements in the modal
+        input_elements = self.driver.find_elements(By.CSS_SELECTOR, ".jobs-easy-apply-content input, [data-test-modal] input, .artdeco-modal input, .jobs-easy-apply-content textarea, [data-test-modal] textarea")
+        for inp in input_elements:
+            try:
+                inp_type = (inp.get_attribute("type") or "text").lower()
+                if inp_type in ['hidden', 'file', 'submit', 'button', 'radio', 'checkbox']:
+                    continue
+                if not inp.is_displayed() or not inp.is_enabled():
+                    continue
+
+                curr_val = (inp.get_attribute("value") or "").strip()
+
+                label_text = ""
+                try:
+                    parent = inp.find_element(By.XPATH, "ancestor::div[contains(@class, 'form-element') or contains(@class, 'fb-single-line-text') or contains(@class, 'grouping') or contains(@class, 'jobs-easy-apply')]")
+                    labels = parent.find_elements(By.TAG_NAME, "label")
+                    if labels:
+                        label_text = labels[0].text.lower()
+                except Exception:
+                    pass
+                if not label_text:
+                    label_text = (inp.get_attribute("aria-label") or inp.get_attribute("name") or inp.get_attribute("id") or "").lower()
+
+                val_to_set = None
+
+                # Phone number
+                if any(k in label_text for k in ['phone number', 'mobile', 'cell', 'phone']):
+                    pure_digits = re.sub(r'\D', '', phone_num)
+                    if len(pure_digits) > 10 and pure_digits.startswith('91'):
+                        pure_digits = pure_digits[2:]
+                    if not curr_val or '+' in curr_val or not curr_val.isdigit():
+                        val_to_set = pure_digits
+
+                # Postal / Zip code
+                elif any(k in label_text for k in ['postal', 'zip', 'pincode']):
+                    if not curr_val:
+                        val_to_set = zip_code
+
+                # City / Location
+                elif any(k in label_text for k in ['city', 'location']):
+                    if not curr_val:
+                        val_to_set = f"{city_name}, Tamil Nadu, India"
+
+                # Website / Portfolio
+                elif any(k in label_text for k in ['portfolio', 'website', 'url', 'personal link', 'project link']):
+                    if not curr_val:
+                        val_to_set = portfolio_url
+
+                # LinkedIn
+                elif 'linkedin' in label_text:
+                    if not curr_val:
+                        val_to_set = linkedin_url
+
+                # GitHub
+                elif 'github' in label_text:
+                    if not curr_val:
+                        val_to_set = github_url
+
+                # Email
+                elif 'email' in label_text:
+                    if not curr_val:
+                        val_to_set = email_addr
+
+                # Years of experience / numeric
+                elif any(k in label_text for k in ['experience', 'years', 'how many years']):
+                    if not curr_val:
+                        val_to_set = "2"
+
+                # Notice period
+                elif 'notice' in label_text:
+                    if not curr_val:
+                        val_to_set = "0"
+
+                # Salary / Compensation / CTC
+                elif any(k in label_text for k in ['salary', 'compensation', 'ctc', 'pay']):
+                    if not curr_val:
+                        val_to_set = "1000000"
+
+                # General required or empty field fallback
+                elif not curr_val:
+                    if inp_type == 'number' or self._is_numeric_field(inp):
+                        val_to_set = "2"
+                    else:
+                        val_to_set = "Yes"
+
+                if val_to_set is not None:
+                    logger.debug(f"Auto-filling field '{label_text}' with: {val_to_set}")
+                    inp.clear()
+                    time.sleep(0.1)
+                    inp.send_keys(val_to_set)
+                    time.sleep(0.2)
+            except Exception as e:
+                logger.debug(f"Input element handling note: {e}")
+
+        # 3. Handle any unselected Radio questions
+        try:
+            radio_groups = self.driver.find_elements(By.CSS_SELECTOR, "fieldset[data-test-form-builder-radio-button-form-component], div.jobs-easy-apply-form-element, div.fb-radio-buttons")
+            for rg in radio_groups:
+                radios = rg.find_elements(By.CSS_SELECTOR, "input[type='radio']")
+                if radios and not any(r.is_selected() for r in radios):
+                    clicked = False
+                    for r in radios:
+                        r_label = r.find_element(By.XPATH, "..").text.lower()
+                        if 'yes' in r_label:
+                            self.driver.execute_script("arguments[0].click();", r)
+                            clicked = True
+                            break
+                    if not clicked and radios:
+                        self.driver.execute_script("arguments[0].click();", radios[0])
+        except Exception:
+            pass
+
+        # 4. Handle required checkboxes (terms / legal authorization)
+        try:
+            checkboxes = self.driver.find_elements(By.CSS_SELECTOR, ".jobs-easy-apply-content input[type='checkbox']")
+            for cb in checkboxes:
+                if not cb.is_selected() and cb.is_displayed():
+                    cb_label = cb.find_element(By.XPATH, "..").text.lower()
+                    if any(w in cb_label for w in ['agree', 'terms', 'acknowledge', 'consent', 'certify', 'confirm']):
+                        self.driver.execute_script("arguments[0].click();", cb)
+        except Exception:
+            pass
 
     def fill_up(self, job) -> None:
         logger.debug(f"Filling up form sections for job: {job}")
 
         try:
-            easy_apply_content = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, 'jobs-easy-apply-content'))
+            self._auto_fill_all_unfilled_fields()
+        except Exception as e:
+            logger.debug(f"Auto fill initial pass note: {e}")
+
+        try:
+            easy_apply_content = WebDriverWait(self.driver, 6).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '.jobs-easy-apply-content, .jobs-easy-apply-modal, [data-test-modal], .artdeco-modal__content'))
             )
 
-            pb4_elements = easy_apply_content.find_elements(By.CLASS_NAME, 'pb4')
+            pb4_elements = easy_apply_content.find_elements(By.CSS_SELECTOR, '.pb4, .jobs-easy-apply-form-section, fieldset, div[class*="form-element"]')
+            if not pb4_elements:
+                pb4_elements = [easy_apply_content]
             for element in pb4_elements:
                 self._process_form_element(element, job)
         except Exception as e:
-            logger.error(f"Failed to find form elements: {e}")
+            logger.debug(f"Form container scan note: {e}")
+            try:
+                self._fill_additional_questions()
+            except Exception:
+                pass
+
+        try:
+            self._auto_fill_all_unfilled_fields()
+        except Exception as e:
+            logger.debug(f"Auto fill final pass note: {e}")
 
     def _process_form_element(self, element: WebElement, job) -> None:
         logger.debug("Processing form element")

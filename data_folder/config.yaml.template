@@ -1,0 +1,59 @@
+# Job Search Preferences Configuration
+# Copy this file to data_folder/config.yaml to adjust your search targets
+
+remote: true
+
+experienceLevel:
+  internship: false
+  entry: true
+  associate: true
+  mid-senior level: false
+  director: false
+  executive: false
+
+jobTypes:
+  full-time: true
+  contract: true
+  part-time: false
+  temporary: false
+  internship: false
+  other: false
+  volunteer: false
+
+date:
+  all time: false
+  month: false
+  week: true
+  24 hours: false
+
+positions:
+  - Full Stack Developer
+  - Full Stack Engineer
+  - Frontend Developer
+  - React Developer
+  - Software Engineer
+  - Web Developer
+  - Solutions Engineer
+
+locations:
+  - Remote
+  - United States
+  - India
+  - Worldwide
+
+apply_once_at_company: false
+distance: 100
+
+companyBlacklist:
+  - ExampleSpamCompany
+
+titleBlacklist:
+  - Senior
+  - Staff
+  - Principal
+  - Architect
+  - Director
+  - Onsite
+
+llm_model_type: gemini
+llm_model: 'gemini-1.5-flash'

@@ -1,0 +1,52 @@
+# Candidate Profile Template
+# Copy this file to data_folder/plain_text_resume.yaml and customize with your details
+
+personal_information:
+  name: "YourFirst"
+  surname: "YourLast"
+  date_of_birth: "YYYY-MM-DD"
+  country: "YourCountry"
+  city: "YourCity"
+  address: "Your City, State"
+  zip_code: "000000"
+  phone_prefix: "+1"
+  phone: "1234567890"
+  email: "your.email@example.com"
+  github: "https://github.com/yourusername"
+  linkedin: "https://www.linkedin.com/in/yourprofile/"
+
+education_details:
+  - education_level: "Bachelor's Degree"
+    institution: "Your University"
+    field_of_study: "Computer Science"
+    final_evaluation_grade: "GPA or Percentage"
+    start_date: "2020"
+    year_of_completion: "2024"
+
+experience_details:
+  - position: "Software Engineer"
+    company: "Tech Company"
+    employment_period: "2023 - 2024"
+    location: "Remote"
+    industry: "Information Technology"
+    key_responsibilities:
+      - responsibility_1: "Developed scalable full-stack web applications and microservices."
+      - responsibility_2: "Integrated REST APIs and payment gateways with automated testing."
+    skills_acquired:
+      - "React"
+      - "Node.js"
+      - "TypeScript"
+      - "Python"
+
+projects:
+  - name: "Full Stack Web App"
+    description: "Built high-performance web platform using React and Node.js."
+    link: "https://yourportfolio.com"
+
+skills:
+  - "JavaScript"
+  - "TypeScript"
+  - "React"
+  - "Node.js"
+  - "Python"
+  - "Git"

@@ -17,8 +17,8 @@ from src.aihawk_job_manager import AIHawkJobManager
 from src.job_application_profile import JobApplicationProfile
 from loguru import logger
 
-# Suppress stderr
-sys.stderr = open(os.devnull, 'w')
+# Ensure output is visible
+
 
 class ConfigError(Exception):
     pass
@@ -165,9 +165,14 @@ def create_and_run_bot(parameters, llm_api_key):
             plain_text_resume = file.read()
         resume_object = Resume(plain_text_resume)
         resume_generator_manager = FacadeManager(llm_api_key, style_manager, resume_generator, resume_object, Path("data_folder/output"))
-        os.system('cls' if os.name == 'nt' else 'clear')
-        resume_generator_manager.choose_style()
-        os.system('cls' if os.name == 'nt' else 'clear')
+        has_resume = bool(parameters.get('uploads', {}).get('resume'))
+        if not has_resume:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            try:
+                resume_generator_manager.choose_style()
+            except Exception as e:
+                logger.warning(f"Style selection bypassed: {e}")
+            os.system('cls' if os.name == 'nt' else 'clear')
         
         job_application_profile_object = JobApplicationProfile(plain_text_resume)
         
@@ -197,6 +202,12 @@ def main(resume: Path = None):
         parameters = ConfigValidator.validate_config(config_file)
         llm_api_key = ConfigValidator.validate_secrets(secrets_file)
         
+        if resume is None:
+            default_resume = data_folder / "resume.pdf"
+            if default_resume.exists():
+                resume = default_resume
+                logger.info(f"Using resume PDF found at {resume}")
+
         parameters['uploads'] = FileManager.file_paths_to_dict(resume, plain_text_resume_file)
         parameters['outputFileDirectory'] = output_folder
         

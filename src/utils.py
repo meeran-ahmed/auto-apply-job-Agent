@@ -14,11 +14,11 @@ log_file = "app_log.log"
 
 if MINIMUM_LOG_LEVEL in ["DEBUG", "TRACE", "INFO", "WARNING", "ERROR", "CRITICAL"]:
     logger.remove()
-    logger.add(sys.stderr, level=MINIMUM_LOG_LEVEL)
+    logger.add(sys.stdout, level=MINIMUM_LOG_LEVEL)
 else:
     logger.warning(f"Invalid log level: {MINIMUM_LOG_LEVEL}. Defaulting to DEBUG.")
     logger.remove()
-    logger.add(sys.stderr, level="DEBUG")
+    logger.add(sys.stdout, level="DEBUG")
 
 chromeProfilePath = os.path.join(os.getcwd(), "chrome_profile", "linkedin_profile")
 
@@ -137,7 +137,6 @@ def chrome_browser_options():
 
     prefs = {
         "profile.default_content_setting_values.images": 2,
-        "profile.managed_default_content_settings.stylesheets": 2,
     }
     options.add_experimental_option("prefs", prefs)
 

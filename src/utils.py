@@ -111,9 +111,8 @@ def scroll_slow(driver, scrollable_element, start=0, end=3600, step=300, reverse
         logger.error(f"Exception occurred during scrolling: {e}")
 
 
-def chrome_browser_options():
+def chrome_browser_options(custom_profile_name: str = None):
     logger.debug("Setting Chrome browser options")
-    ensure_chrome_profile()
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     options.add_argument("--no-sandbox")
@@ -140,7 +139,13 @@ def chrome_browser_options():
     }
     options.add_experimental_option("prefs", prefs)
 
-    if len(chromeProfilePath) > 0:
+    if custom_profile_name:
+        profile_path = os.path.abspath(f"chrome_profile/{custom_profile_name}")
+        os.makedirs(profile_path, exist_ok=True)
+        options.add_argument(f"--user-data-dir={profile_path}")
+        logger.debug(f"Using isolated Chrome profile directory: {profile_path}")
+    elif len(chromeProfilePath) > 0:
+        ensure_chrome_profile()
         initial_path = os.path.dirname(chromeProfilePath)
         profile_dir = os.path.basename(chromeProfilePath)
         options.add_argument('--user-data-dir=' + initial_path)

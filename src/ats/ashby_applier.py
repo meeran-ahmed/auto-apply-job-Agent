@@ -99,15 +99,27 @@ class AshbyApplier:
 
             # 6. Submit
             time.sleep(2)
-            submit_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[type='submit'], [data-ashby-submit-button]")
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(1.5)
+
+            submit_btns = self.driver.find_elements(
+                By.XPATH,
+                "//button[contains(translate(., 'SUBMITAPPLY', 'submitapply'), 'submit') or contains(translate(., 'SUBMITAPPLY', 'submitapply'), 'apply') or contains(translate(., 'SEND', 'send'), 'send')] | "
+                "//button[@type='submit'] | "
+                "//input[@type='submit'] | "
+                "//button[contains(@class, 'submit') or contains(@class, 'apply')]"
+            )
             for btn in submit_btns:
-                if btn.is_displayed() and btn.is_enabled():
-                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
-                    time.sleep(1)
-                    self.driver.execute_script("arguments[0].click();", btn)
-                    logger.info("Clicked Ashby Submit button!")
-                    time.sleep(4)
-                    return True
+                try:
+                    if btn.is_displayed() and btn.is_enabled():
+                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+                        time.sleep(1)
+                        self.driver.execute_script("arguments[0].click();", btn)
+                        logger.info("Clicked Ashby / Universal Submit button!")
+                        time.sleep(4)
+                        return True
+                except Exception:
+                    continue
 
             return False
 

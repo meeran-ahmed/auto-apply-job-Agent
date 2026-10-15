@@ -32,15 +32,15 @@ class ATSAgent:
             try:
                 apply_elements = self.driver.find_elements(
                     "xpath",
-                    "//a[contains(@href, 'greenhouse') or contains(@href, 'lever') or contains(@href, 'ashby') or contains(@href, 'workday') or contains(@href, 'smartrecruiters') or contains(@href, 'external')] | "
-                    "//a[contains(translate(., 'APPLY', 'apply'), 'apply') and not(contains(@href, 'mailto:')) and not(contains(@href, '#'))] | "
+                    "//a[contains(@href, 'greenhouse') or contains(@href, 'lever') or contains(@href, 'ashby') or contains(@href, 'workday') or contains(@href, 'smartrecruiters') or contains(@href, 'recruitee') or contains(@href, 'workable') or contains(@href, 'bamboohr') or contains(@href, 'rippling') or contains(@href, 'external')] | "
+                    "//a[contains(translate(., 'APPLY', 'apply'), 'apply') and not(contains(@href, 'mailto:')) and not(contains(@href, '#')) and not(contains(@href, 'ai-copilot'))] | "
                     "//button[contains(translate(., 'APPLY', 'apply'), 'apply')] | "
                     "//a[contains(@class, 'apply') or contains(@id, 'apply')]"
                 )
                 if apply_elements:
                     btn = apply_elements[0]
                     dest_href = btn.get_attribute("href")
-                    if dest_href and dest_href.startswith("http") and ("jobicy.com" not in dest_href or "external" in dest_href):
+                    if dest_href and dest_href.startswith("http") and not any(board in dest_href for board in ["remoterocketship.com/company", "remoterocketship.com/jobs", "jobicy.com/jobs"]):
                         logger.info(f"[ATSAgent] Navigating directly to external ATS link: {dest_href}")
                         self.driver.get(dest_href)
                         time.sleep(3.5)

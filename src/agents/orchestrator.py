@@ -55,7 +55,7 @@ class SwarmOrchestrator:
         if discovered_jobs:
             logger.info("[Agent: ATS Worker] Initializing dedicated ATS browser worker...")
             try:
-                options = chrome_browser_options()
+                options = chrome_browser_options(custom_profile_name="ats_worker_profile")
                 service = ChromeService(ChromeDriverManager().install())
                 driver = webdriver.Chrome(service=service, options=options)
                 ats_worker = ATSAgent(
@@ -110,7 +110,7 @@ class SwarmOrchestrator:
 
         logger.info(f"[Swarm Orchestrator] Loaded {len(jobs)} jobs from spreadsheet. Initializing ATS worker...")
         try:
-            options = chrome_browser_options()
+            options = chrome_browser_options(custom_profile_name="excel_ats_worker_profile")
             service = ChromeService(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=options)
             ats_worker = ATSAgent(

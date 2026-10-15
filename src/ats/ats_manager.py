@@ -25,19 +25,28 @@ class ATSManager:
         ats_type = ATSDetector.detect(self.driver, current_url)
         logger.info(f"Target URL: {current_url} -> Detected ATS: {ats_type}")
 
+        # Direct targeted engine attempt
         if ats_type == "greenhouse":
-            return self.greenhouse.apply(job_title, company)
+            if self.greenhouse.apply(job_title, company):
+                return True
+        elif ats_type == "lever":
+            if self.lever.apply(job_title, company):
+                return True
+        elif ats_type == "ashby":
+            if self.ashby.apply(job_title, company):
+                return True
 
-        if ats_type == "lever":
-            return self.lever.apply(job_title, company)
+        # Multi-engine universal fallback
+        logger.info(f"Applying via Universal ATS engine fallback for: {current_url}")
+        for engine_name, engine in [("Greenhouse/Universal", self.greenhouse), ("Lever", self.lever), ("Ashby", self.ashby)]:
+            try:
+                logger.debug(f"Attempting {engine_name} engine...")
+                if engine.apply(job_title, company):
+                    logger.info(f"Successfully submitted application using {engine_name} engine!")
+                    return True
+            except Exception as e:
+                logger.debug(f"{engine_name} attempt note: {e}")
+                continue
 
-        if ats_type == "ashby":
-            return self.ashby.apply(job_title, company)
-
-        if ats_type == "generic":
-            # Try greenhouse or lever form matching
-            logger.info("Applying via Generic ATS strategy...")
-            return self.greenhouse.apply(job_title, company) or self.lever.apply(job_title, company)
-
-        logger.warning(f"Unsupported or unknown ATS for {current_url}")
+        logger.warning(f"Could not auto-submit form for {current_url}")
         return False

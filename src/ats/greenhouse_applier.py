@@ -138,24 +138,29 @@ class GreenhouseApplier:
 
             # 7. Submit Application
             time.sleep(2)
-            submit_selectors = [
-                "input#submit_app",
-                "button#submit_app",
-                "input[type='submit']",
-                "button[type='submit']",
-                "button[id*='submit']",
-                "button.submit-button"
-            ]
-            for sel in submit_selectors:
-                btns = self.driver.find_elements(By.CSS_SELECTOR, sel)
-                for btn in btns:
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(1.5)
+
+            submit_elements = self.driver.find_elements(
+                By.XPATH,
+                "//button[contains(translate(., 'SUBMITAPPLY', 'submitapply'), 'submit') or contains(translate(., 'SUBMITAPPLY', 'submitapply'), 'apply') or contains(translate(., 'SEND', 'send'), 'send')] | "
+                "//input[@type='submit'] | "
+                "//input[contains(@value, 'Submit') or contains(@value, 'Apply')] | "
+                "//button[@type='submit'] | "
+                "//button[contains(@id, 'submit') or contains(@class, 'submit')] | "
+                "//a[contains(@class, 'submit') or contains(@class, 'apply') and contains(@role, 'button')]"
+            )
+            for btn in submit_elements:
+                try:
                     if btn.is_displayed() and btn.is_enabled():
                         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
                         time.sleep(1)
                         self.driver.execute_script("arguments[0].click();", btn)
-                        logger.info("Clicked Greenhouse Submit button!")
+                        logger.info("Clicked Greenhouse / Universal Submit button!")
                         time.sleep(4)
                         return True
+                except Exception:
+                    continue
 
             logger.warning("No clickable Greenhouse submit button found.")
             return False

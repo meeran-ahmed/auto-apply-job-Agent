@@ -33,6 +33,10 @@ class ATSDetector:
             logger.info("Detected ATS: SmartRecruiters")
             return "smartrecruiters"
 
+        if any(ats in url_lower for ats in ["recruitee.com", "workable.com", "bamboohr.com", "rippling.com", "pinpointhq.com"]):
+            logger.info("Detected ATS: Standard ATS Platform")
+            return "generic"
+
         # 2. DOM inspection detection (for white-labeled custom domains)
         try:
             page_source = driver.page_source.lower()

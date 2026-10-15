@@ -164,18 +164,47 @@ titleBlacklist:
 
 ---
 
-## Running the Application
+## 🖥️ 1-Click Desktop GUI & Launchers (No Terminal Needed!)
 
-### Option A: Global Remote Swarm (No LinkedIn login needed)
+Non-technical users can launch OmniSwarm with a single click:
+
+- **Windows**: Double-click `launcher.bat` to launch the Dark Mode Desktop GUI.
+- **macOS / Linux**: Run `./launcher.sh` in terminal.
+- **Python command**:
+  ```bash
+  python gui_main.py
+  ```
+
+### GUI Features:
+- 👤 **Candidate Profile Tab**: Easily enter contact info, portfolio link, and upload your PDF resume.
+- 🔑 **Keys Tab**: Save your free Google Gemini API key securely.
+- ⚡ **Dashboard Tab**: Pick between Auto-Scout Swarm or Custom Excel Spreadsheet, set application limits, watch live console logs, and click to view your Markdown report instantly.
+
+---
+
+## 📱 1-Click Mobile & Tablet Cloud Runner (Google Colab)
+
+Don't have a computer? You can run OmniSwarm directly from your **iPhone, Android, iPad, or Chromebook**:
+1. Open the [`OmniSwarm_Mobile_Runner.ipynb`](OmniSwarm_Mobile_Runner.ipynb) in **Google Colab**.
+2. Run Step 1 (installs headless Chromium in Google's cloud sandbox for free).
+3. Upload your resume and spreadsheet in Step 2.
+4. Tap Step 3 to start applying! OmniSwarm automatically downloads your completed application report when done.
+
+---
+
+## Running from the Terminal (CLI)
+
+### Option A: Custom Excel / CSV Batch Auto-Apply
+Have a curated list of jobs? Drop an Excel (`.xlsx`, `.xls`) or CSV spreadsheet with job links, and the swarm will process and submit applications to every listed URL:
+```bash
+python swarm_main.py --mode excel --file data_folder/jobs_template.xlsx
+```
+*(If `--file` is omitted, the agent will automatically find and process any `.xlsx` or `.csv` file in `data_folder/`)*. Ready-to-use templates are included at [`data_folder/jobs_template.xlsx`](file:///d:/job%20auto/aihawk/data_folder/jobs_template.xlsx) and [`data_folder/jobs_template.csv`](file:///d:/job%20auto/aihawk/data_folder/jobs_template.csv).
+
+### Option B: Global Remote Swarm (No LinkedIn login needed)
 Dispatches the swarm across remote job boards and company ATS endpoints:
 ```bash
 python swarm_main.py --mode swarm --limit 50
-```
-
-### Option B: LinkedIn Dual-Tier Apply
-Launches the browser with your existing Chrome session, searching and applying for target roles:
-```bash
-python swarm_main.py --mode linkedin
 ```
 
 ### Option C: All Channels (Full Spectrum)
@@ -184,15 +213,6 @@ Runs the remote discovery swarm first, followed by LinkedIn automation:
 python swarm_main.py --mode all --limit 50
 ```
 
-### Option D: Custom Excel / CSV Batch Auto-Apply
-Have a curated list of jobs? Drop an Excel (`.xlsx`, `.xls`) or CSV spreadsheet with job links, and the swarm will process and submit applications to every listed URL:
-```bash
-python swarm_main.py --mode excel --file data_folder/jobs_template.xlsx
-```
-*(If `--file` is omitted, the agent will automatically find and process any `.xlsx` or `.csv` file in `data_folder/`)*. Ready-to-use templates are included at [`data_folder/jobs_template.xlsx`](file:///d:/job%20auto/aihawk/data_folder/jobs_template.xlsx) and [`data_folder/jobs_template.csv`](file:///d:/job%20auto/aihawk/data_folder/jobs_template.csv).
-
-
----
 
 ## Use with AI Agents (Antigravity, Cursor, Claude Code, Codex)
 

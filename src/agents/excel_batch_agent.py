@@ -11,13 +11,13 @@ class ExcelBatchAgent:
     """
     Dedicated agent for ingesting custom job lists from Excel (.xlsx, .xls) and CSV files.
     Extracts direct application links, company names, and job titles,
-    normalizing them for autonomous background submission by ATSAgent.
+    supporting standard URLs, embedded cell hyperlinks, and Excel =HYPERLINK() formulas.
     """
 
     URL_COLUMN_ALIASES = [
-        "url", "job url", "job_url", "link", "job link", "job_link",
-        "apply link", "apply_link", "website", "direct link",
-        "direct_link", "application url", "application_link", "career link"
+        "direct apply link", "apply link", "apply_link", "job link",
+        "job_link", "url", "job url", "job_url", "link", "website",
+        "direct link", "direct_link", "application url", "application_link", "career link"
     ]
 
     COMPANY_COLUMN_ALIASES = [
@@ -26,12 +26,12 @@ class ExcelBatchAgent:
     ]
 
     TITLE_COLUMN_ALIASES = [
-        "title", "job title", "job_title", "role", "position",
+        "job title", "job_title", "title", "role", "position",
         "job role", "job_role", "designation"
     ]
 
     LOCATION_COLUMN_ALIASES = [
-        "location", "city", "country", "remote", "job location", "workplace"
+        "location", "city", "country", "remote", "location & work mode", "job location", "workplace"
     ]
 
     def __init__(self, file_path: Optional[str] = None):
@@ -39,7 +39,7 @@ class ExcelBatchAgent:
 
     def locate_sheet(self, search_dir: str = "data_folder") -> Optional[str]:
         """
-        Auto-discovers any Excel or CSV file in the given directory or root.
+        Auto-discovers any Excel or CSV file in data_folder, Downloads, or workspace root.
         """
         if self.file_path and os.path.exists(self.file_path):
             return os.path.abspath(self.file_path)
@@ -51,11 +51,18 @@ class ExcelBatchAgent:
             Path("jobs.csv")
         ]
 
-        # Scan search_dir for any .xlsx or .csv
+        # Scan data_folder for any .xlsx or .csv
         search_path = Path(search_dir)
         if search_path.exists():
             for f in search_path.iterdir():
                 if f.suffix.lower() in [".xlsx", ".xls", ".csv"] and not f.name.endswith(".template"):
+                    return str(f.resolve())
+
+        # Scan Downloads for recent job tracker spreadsheets
+        downloads_dir = Path.home() / "Downloads"
+        if downloads_dir.exists():
+            for f in downloads_dir.iterdir():
+                if f.suffix.lower() in [".xlsx", ".xls", ".csv"] and ("job" in f.name.lower() or "tracker" in f.name.lower()):
                     return str(f.resolve())
 
         # Scan root dir
@@ -89,53 +96,78 @@ class ExcelBatchAgent:
     def _parse_excel(self, file_path: str) -> List[Dict[str, str]]:
         jobs = []
         try:
-            wb = openpyxl.load_workbook(file_path, data_only=True)
-            sheet = wb.active
-            rows = list(sheet.iter_rows(values_only=True))
-            if not rows:
-                return []
+            wb = openpyxl.load_workbook(file_path, data_only=False)
+            
+            # Select target sheet
+            target_sheet = wb.active
+            for name in wb.sheetnames:
+                if any(k in name.lower() for k in ["job", "role", "tracker", "openings"]):
+                    target_sheet = wb[name]
+                    break
 
-            header_row = [str(cell).strip().lower() if cell is not None else "" for cell in rows[0]]
-            col_map = self._map_columns(header_row)
+            logger.info(f"[ExcelBatchAgent] Scanning sheet: '{target_sheet.title}'")
 
-            # If headers were detected
-            if "url" in col_map:
-                for row_idx, row in enumerate(rows[1:], start=2):
-                    if not row or all(v is None for v in row):
+            # Scan rows to locate the header row
+            header_row_idx = None
+            col_map = {}
+            all_rows = list(target_sheet.iter_rows())
+
+            for r_idx, row in enumerate(all_rows[:25], start=1):
+                row_vals = [str(c.value).strip().lower() if c.value is not None else "" for c in row]
+                mapping = self._map_columns(row_vals)
+                if "url" in mapping:
+                    header_row_idx = r_idx
+                    col_map = mapping
+                    logger.info(f"[ExcelBatchAgent] Detected table header at row {r_idx}: {mapping}")
+                    break
+
+            if header_row_idx and "url" in col_map:
+                for r_idx, row in enumerate(all_rows[header_row_idx:], start=header_row_idx + 1):
+                    # Check cell values
+                    url_cell = row[col_map["url"]] if col_map["url"] < len(row) else None
+                    if not url_cell:
                         continue
-                    url_val = self._get_cell(row, col_map.get("url"))
-                    if not url_val:
+
+                    # Try to extract URL from cell value, formula, or hyperlink
+                    clean_url = self._extract_url_from_cell(url_cell)
+                    if not clean_url:
                         continue
-                    clean_url = self._extract_url(url_val)
-                    if clean_url:
-                        jobs.append({
-                            "title": self._get_cell(row, col_map.get("title")) or "Engineering Position",
-                            "company": self._get_cell(row, col_map.get("company")) or "Tech Employer",
-                            "location": self._get_cell(row, col_map.get("location")) or "Remote",
-                            "url": clean_url,
-                            "platform": "Excel Batch Import"
-                        })
+
+                    title_cell = row[col_map.get("title")] if "title" in col_map and col_map["title"] < len(row) else None
+                    company_cell = row[col_map.get("company")] if "company" in col_map and col_map["company"] < len(row) else None
+                    location_cell = row[col_map.get("location")] if "location" in col_map and col_map["location"] < len(row) else None
+
+                    title_val = self._clean_text(title_cell.value if title_cell else "") or f"Position (Row {r_idx})"
+                    company_val = self._clean_text(company_cell.value if company_cell else "") or "Tech Employer"
+                    loc_val = self._clean_text(location_cell.value if location_cell else "") or "Remote"
+
+                    jobs.append({
+                        "title": title_val,
+                        "company": company_val,
+                        "location": loc_val,
+                        "url": clean_url,
+                        "platform": "Excel Batch Import"
+                    })
             else:
-                # Raw row-by-row fallback scanning for any cell matching http:// or https://
+                # Deep scan for any cell containing http/https or =HYPERLINK
                 logger.info("[ExcelBatchAgent] No standard column headers detected; performing deep URL pattern scan...")
-                for row_idx, row in enumerate(rows, start=1):
-                    for cell_val in row:
-                        if cell_val:
-                            found_url = self._extract_url(str(cell_val))
-                            if found_url:
-                                jobs.append({
-                                    "title": f"Position (Row {row_idx})",
-                                    "company": "Tech Employer",
-                                    "location": "Remote",
-                                    "url": found_url,
-                                    "platform": "Excel Batch Import"
-                                })
-                                break
+                for r_idx, row in enumerate(all_rows, start=1):
+                    for cell in row:
+                        found_url = self._extract_url_from_cell(cell)
+                        if found_url:
+                            jobs.append({
+                                "title": f"Position (Row {r_idx})",
+                                "company": "Tech Employer",
+                                "location": "Remote",
+                                "url": found_url,
+                                "platform": "Excel Batch Import"
+                            })
+                            break
 
         except Exception as e:
             logger.error(f"[ExcelBatchAgent] Failed to parse Excel sheet '{file_path}': {e}")
 
-        logger.info(f"[ExcelBatchAgent] Successfully parsed {len(jobs)} jobs from Excel.")
+        logger.info(f"[ExcelBatchAgent] Successfully parsed {len(jobs)} verified jobs from Excel.")
         return jobs
 
     def _parse_csv(self, file_path: str) -> List[Dict[str, str]]:
@@ -147,18 +179,26 @@ class ExcelBatchAgent:
                 if not rows:
                     return []
 
-                header_row = [c.strip().lower() for c in rows[0]]
-                col_map = self._map_columns(header_row)
+                # Find header row
+                header_row_idx = None
+                col_map = {}
+                for idx, row in enumerate(rows[:20]):
+                    row_vals = [c.strip().lower() for c in row]
+                    mapping = self._map_columns(row_vals)
+                    if "url" in mapping:
+                        header_row_idx = idx
+                        col_map = mapping
+                        break
 
-                if "url" in col_map:
-                    for row_idx, row in enumerate(rows[1:], start=2):
+                if header_row_idx is not None and "url" in col_map:
+                    for row_idx, row in enumerate(rows[header_row_idx + 1:], start=header_row_idx + 2):
                         if not row or all(not v.strip() for v in row):
                             continue
                         url_val = self._get_cell(row, col_map.get("url"))
                         clean_url = self._extract_url(url_val)
                         if clean_url:
                             jobs.append({
-                                "title": self._get_cell(row, col_map.get("title")) or "Engineering Position",
+                                "title": self._get_cell(row, col_map.get("title")) or f"Position (Row {row_idx})",
                                 "company": self._get_cell(row, col_map.get("company")) or "Tech Employer",
                                 "location": self._get_cell(row, col_map.get("location")) or "Remote",
                                 "url": clean_url,
@@ -202,20 +242,40 @@ class ExcelBatchAgent:
 
         return col_map
 
-    @staticmethod
-    def _get_cell(row, idx: Optional[int]) -> str:
-        if idx is not None and 0 <= idx < len(row):
-            val = row[idx]
-            return str(val).strip() if val is not None else ""
-        return ""
+    @classmethod
+    def _extract_url_from_cell(cls, cell) -> Optional[str]:
+        if not cell:
+            return None
+
+        # 1. Hyperlink attribute
+        if hasattr(cell, "hyperlink") and cell.hyperlink and cell.hyperlink.target:
+            return cell.hyperlink.target.strip()
+
+        # 2. String value or formula
+        val = str(cell.value) if cell.value is not None else ""
+        return cls._extract_url(val)
 
     @staticmethod
     def _extract_url(text: str) -> Optional[str]:
         if not text:
             return None
         text = text.strip()
+        # Direct URL
         if text.startswith("http://") or text.startswith("https://"):
             return text.split()[0]
-        # Regex search
-        match = re.search(r"https?://[^\s,;\"']+", text)
-        return match.group(0) if match else None
+        # Regex search for URLs inside =HYPERLINK("...", ...) or free text
+        match = re.search(r"https?://[^\s,\"'\)\>\<\;]+", text)
+        return match.group(0).rstrip(".,;") if match else None
+
+    @staticmethod
+    def _clean_text(val) -> str:
+        if val is None:
+            return ""
+        return str(val).strip()
+
+    @staticmethod
+    def _get_cell(row, idx: Optional[int]) -> str:
+        if idx is not None and 0 <= idx < len(row):
+            val = row[idx]
+            return str(val).strip() if val is not None else ""
+        return ""

@@ -3,54 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Job — Autonomous Multi-Platform Job Application Agent</title>
-    <meta name="description" content="100% Free, open-source automated job application agent. Apply autonomously across Greenhouse, Lever, Ashby, and Workable on Windows, Mac, Linux, and Mobile.">
+    <title>Auto Job — Autonomous Multi-Engine Job Application System</title>
+    <meta name="description" content="100% Free, open-source automated job application agent. Deploy intelligent browser workers across Greenhouse, Lever, Ashby, and Workable on Windows, macOS, Linux, and Mobile.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 </head>
-<body>
-    <!-- Top Utility Bar -->
-    <div class="top-bar">
-        <div class="container top-bar-content">
-            <div class="top-badge">Open Source • MIT Licensed</div>
-            <div class="top-announcement">
-                <span>Free forever • Zero subscriptions • Bring your own free Google Gemini key</span>
-            </div>
-            <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener" class="top-link">
-                GitHub Repo ↗
-            </a>
-        </div>
-    </div>
+<body class="light-mode">
+    <!-- Subtle Architectural Grid Background -->
+    <div class="bg-grid-pattern"></div>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
 
-    <!-- Navigation Bar -->
+    <!-- Top Announcement Strip -->
+    <aside class="announcement-strip">
+        <div class="container strip-content">
+            <div class="strip-left">
+                <span class="tag-live">RELEASE v2.4</span>
+                <span class="strip-text">Open Source • Multi-Platform Engine • Bring Your Own Free Gemini Key</span>
+            </div>
+            <a href="#byok" class="strip-link">Learn How BYOK Works <span class="arrow">→</span></a>
+        </div>
+    </aside>
+
+    <!-- Global Navigation -->
     <header class="navbar" id="navbar">
-        <div class="container nav-content">
-            <a href="#" class="brand">
-                <div class="brand-badge">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                        <polyline points="12 11 12 17"></polyline>
-                        <polyline points="9 14 12 11 15 14"></polyline>
+        <div class="container nav-container">
+            <a href="#" class="brand-identity">
+                <div class="brand-symbol">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                     </svg>
                 </div>
-                <div class="brand-text">
+                <div class="brand-meta">
                     <span class="brand-title">Auto Job</span>
-                    <span class="brand-subtitle">by Meeran Ahmed</span>
+                    <span class="brand-tag">by Meeran Ahmed</span>
                 </div>
             </a>
-            <nav class="nav-menu">
-                <a href="#how-it-works">How It Works</a>
-                <a href="#devices">Device Guide</a>
-                <a href="#free-key">Your Free API Key</a>
-                <a href="#features">Features</a>
-                <a href="#faq">FAQ</a>
+
+            <nav class="nav-links">
+                <a href="#pipeline" class="nav-item">Architecture</a>
+                <a href="#devices" class="nav-item">Device Setup</a>
+                <a href="#byok" class="nav-item">Free Gemini Key</a>
+                <a href="#calculator" class="nav-item">Quota Calculator</a>
+                <a href="#faq" class="nav-item">FAQ</a>
             </nav>
-            <div class="nav-cta">
-                <a href="#devices" class="btn btn-primary-nav">
-                    Get Started Free
+
+            <div class="nav-cta-group">
+                <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener" class="btn btn-github">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    <span>Star Repo</span>
                 </a>
+                <a href="#devices" class="btn btn-primary-nav">Get Started</a>
             </div>
         </div>
     </header>
@@ -58,362 +66,441 @@
     <main>
         <!-- Hero Section -->
         <section class="hero-section">
-            <div class="container hero-grid">
+            <div class="container hero-container">
                 <div class="hero-content">
-                    <div class="hero-pill">
-                        <span class="pill-dot"></span>
-                        <span>Client-Side & Free Cloud Runner • Zero Server Costs</span>
+                    <div class="status-pill gsap-hero">
+                        <span class="pulsing-beacon"></span>
+                        <span>Zero Subscription Fees • Client-Side & Free Cloud Engine</span>
                     </div>
-                    <h1 class="hero-heading">
+
+                    <h1 class="hero-title gsap-hero">
                         Autonomous job applications. <br>
-                        <span class="text-blue">Built for every job seeker.</span>
+                        <span class="gradient-text">Engineered for precision.</span>
                     </h1>
-                    <p class="hero-description">
-                        Stop spending hours manually copy-pasting your resume details and answering repetitive screening questions. <strong>Auto Job</strong> is a free, intelligent desktop and mobile automation tool that fills and submits verified applications on <strong>Greenhouse, Lever, Ashby, Workable, and Keka</strong>.
+
+                    <p class="hero-subtitle gsap-hero">
+                        Tired of losing entire weekends copy-pasting your work history and answers into repetitive career portals? <strong>Auto Job</strong> deploys specialized browser workers that navigate, auto-populate, and submit applications directly across <strong>Greenhouse, Lever, Ashby, and Workable</strong>.
                     </p>
-                    <div class="hero-actions">
-                        <a href="#devices" class="btn btn-primary-large">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span>Download for Your Device</span>
+
+                    <div class="hero-actions gsap-hero">
+                        <a href="#devices" class="btn btn-hero-primary magnetic-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Download Desktop App</span>
                         </a>
-                        <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" rel="noopener" class="btn btn-secondary-large">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                        <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" rel="noopener" class="btn btn-hero-secondary magnetic-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
                             <span>Run on Phone / Tablet</span>
                         </a>
                     </div>
-                    <div class="hero-trust">
-                        <div class="trust-item">
-                            <span class="trust-icon">✓</span>
+
+                    <div class="trust-strip gsap-hero">
+                        <div class="trust-badge">
+                            <span class="t-check">✓</span>
                             <span>100% Free Forever</span>
                         </div>
-                        <div class="trust-item">
-                            <span class="trust-icon">✓</span>
-                            <span>No Credit Card Needed</span>
+                        <div class="trust-badge">
+                            <span class="t-check">✓</span>
+                            <span>No Credit Card Required</span>
                         </div>
-                        <div class="trust-item">
-                            <span class="trust-icon">✓</span>
-                            <span>Your Data Stays on Your Machine</span>
+                        <div class="trust-badge">
+                            <span class="t-check">✓</span>
+                            <span>Resume Data Stays 100% Local</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Clean Dashboard Graphic / UI Mockup -->
-                <div class="hero-preview">
-                    <div class="preview-card">
-                        <div class="preview-header">
-                            <div class="window-dots">
-                                <span class="dot dot-close"></span>
-                                <span class="dot dot-min"></span>
-                                <span class="dot dot-max"></span>
+                <!-- 3D Interactive Console Card (GSAP Parallax) -->
+                <div class="hero-visual gsap-hero">
+                    <div class="terminal-deck" id="terminal-deck">
+                        <div class="deck-top">
+                            <div class="deck-controls">
+                                <span class="dot d-close"></span>
+                                <span class="dot d-min"></span>
+                                <span class="dot d-max"></span>
                             </div>
-                            <div class="preview-title">Auto Job Desktop — v2.4 Control Center</div>
-                            <div class="preview-status">Active Session</div>
+                            <div class="deck-title">autojob-runtime // v2.4</div>
+                            <div class="deck-badge">ISOLATED SANDBOX</div>
                         </div>
-                        <div class="preview-body">
-                            <div class="preview-row">
-                                <div class="stat-box">
-                                    <span class="stat-label">Applications Logged</span>
-                                    <span class="stat-number">88+</span>
+
+                        <div class="deck-body">
+                            <div class="deck-stats">
+                                <div class="mini-stat">
+                                    <span class="ms-label">Application Status</span>
+                                    <span class="ms-val active-val">● Autonomous</span>
                                 </div>
-                                <div class="stat-box">
-                                    <span class="stat-label">Supported ATS</span>
-                                    <span class="stat-number">5 Engines</span>
+                                <div class="mini-stat">
+                                    <span class="ms-label">Supported ATS</span>
+                                    <span class="ms-val">5 Engines</span>
                                 </div>
-                                <div class="stat-box">
-                                    <span class="stat-label">Cost to Run</span>
-                                    <span class="stat-number">$0.00</span>
+                                <div class="mini-stat">
+                                    <span class="ms-label">Cost to Run</span>
+                                    <span class="ms-val highlight-val">$0.00 / Free</span>
                                 </div>
                             </div>
-                            <div class="console-box">
-                                <div class="console-header">Real-time Application Log</div>
-                                <div class="console-content" id="console-stream">
-                                    <div class="c-line c-info">[AutoJob] Engine initialized in Spreadsheet Mode (52 jobs queued)</div>
-                                    <div class="c-line c-dim">[01/52] Navigating: Cardiff Software Engineer</div>
-                                    <div class="c-line c-dim">↳ Detected: Greenhouse ATS Universal Form</div>
-                                    <div class="c-line c-success">✓ Attached candidate resume: resume.pdf (88 KB)</div>
-                                    <div class="c-line c-success">✓ Form submitted successfully! (Confirmation receipt #40192)</div>
-                                    <div class="c-line c-dim">[02/52] Navigating: SupportYourApp</div>
-                                    <div class="c-line c-success">✓ Detected Ashby HQ form & uploaded credentials. Submitted!</div>
-                                    <div class="c-line c-highlight">Audit report updated: APPLICATIONS_REPORT.md</div>
-                                </div>
+
+                            <div class="console-screen" id="console-screen">
+                                <div class="c-row c-dim">[00:00.01] Auto Job Runtime v2.4 initialized.</div>
+                                <div class="c-row c-accent">[00:00.03] Ingestion: jobs.xlsx loaded (48 vacancies queued).</div>
+                                <div class="c-row c-dim">[00:01.20] Job 1: Acme Systems — Senior Full Stack Developer</div>
+                                <div class="c-row c-purple">↳ Detected ATS: Greenhouse Universal Application Adapter</div>
+                                <div class="c-row c-green">  ✓ Injected candidate credentials & attached resume.pdf</div>
+                                <div class="c-row c-green">  ✓ Form submitted! Response: 200 OK (Application verified)</div>
+                                <div class="c-row c-dim">[00:04.10] Job 2: Nova Labs — Frontend Engineer</div>
+                                <div class="c-row c-purple">↳ Detected ATS: Ashby HQ Dynamic Form</div>
+                                <div class="c-row c-green">  ✓ Auto-filled custom questionnaire via local Gemini worker</div>
+                                <div class="c-row c-green">  ✓ Form successfully submitted!</div>
+                                <div class="c-row c-gold">★ Audit receipt saved to APPLICATIONS_REPORT.md</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE PIPELINE ARCHITECTURE (AWARD-WINNING VISUAL) -->
+        <section class="pipeline-section" id="pipeline">
+            <div class="container">
+                <div class="section-intro">
+                    <span class="section-eyebrow">SYSTEM ARCHITECTURE</span>
+                    <h2 class="section-headline">How the Automation Cascade Operates</h2>
+                    <p class="section-description">
+                        Unlike basic auto-fill extensions that break on dynamic single-page applications, Auto Job handles the full application lifecycle.
+                    </p>
+                </div>
+
+                <div class="pipeline-grid">
+                    <div class="pipeline-card" data-stage="1">
+                        <div class="stage-tag">STAGE 01</div>
+                        <div class="card-icon-box">📊</div>
+                        <h3>Ingestion Engine</h3>
+                        <p>Accepts any spreadsheet (<code>.xlsx</code> or <code>.csv</code>). Automatically extracts URLs from Excel <code>=HYPERLINK()</code> formulas and resolves redirect tracking links.</p>
+                        <div class="card-meta-pill">Excel & CSV Supported</div>
+                    </div>
+
+                    <div class="pipeline-card" data-stage="2">
+                        <div class="stage-tag">STAGE 02</div>
+                        <div class="card-icon-box">🔍</div>
+                        <h3>ATS Detector & DOM Parser</h3>
+                        <p>Classifies company job boards into Greenhouse, Lever, Ashby, Workable, and Keka engines. Switches into nested iframes and locates submission forms.</p>
+                        <div class="card-meta-pill">5 ATS Adapters</div>
+                    </div>
+
+                    <div class="pipeline-card" data-stage="3">
+                        <div class="stage-tag">STAGE 03</div>
+                        <div class="card-icon-box">🤖</div>
+                        <h3>Screening Reasoning</h3>
+                        <p>Uses your private, free Google Gemini API key to generate contextual answers for screening questionnaires based strictly on your real resume profile.</p>
+                        <div class="card-meta-pill">BYOK Gemini 1.5 Flash</div>
+                    </div>
+
+                    <div class="pipeline-card" data-stage="4">
+                        <div class="stage-tag">STAGE 04</div>
+                        <div class="card-icon-box">📑</div>
+                        <h3>Audit Ledger & Receipt</h3>
+                        <p>Compiles an instant timestamped audit report (<code>APPLICATIONS_REPORT.md</code> and <code>success.json</code>) with direct confirmation links.</p>
+                        <div class="card-meta-pill">Markdown & JSON Log</div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- DEVICE WALKTHROUGH SECTION -->
-        <section class="device-section" id="devices">
+        <section class="devices-section" id="devices">
             <div class="container">
-                <div class="section-heading-block">
-                    <span class="section-tag">Step-by-Step Instructions</span>
-                    <h2 class="section-title">How to Run Auto Job on Any Device</h2>
-                    <p class="section-subtitle">
-                        Choose your platform below. Everything is pre-configured so you can get started in less than 2 minutes.
+                <div class="section-intro">
+                    <span class="section-eyebrow">STEP-BY-STEP DEPLOYMENT</span>
+                    <h2 class="section-headline">Run Auto Job on Any Device</h2>
+                    <p class="section-description">
+                        Choose your platform below. Everything is pre-configured so you can run your first batch of jobs in 2 minutes.
                     </p>
                 </div>
 
-                <!-- Tabs Navigation -->
-                <div class="tab-buttons">
-                    <button class="tab-btn active" data-device="windows" id="btn-win">
-                        <span class="tab-device-icon">🪟</span>
+                <!-- Device Selector Tabs -->
+                <div class="device-tab-bar">
+                    <button class="device-tab-btn active" data-target="win">
+                        <span class="device-icon">🪟</span>
                         <span>Windows PC</span>
                     </button>
-                    <button class="tab-btn" data-device="mac" id="btn-mac">
-                        <span class="tab-device-icon">🍎</span>
+                    <button class="device-tab-btn" data-target="mac">
+                        <span class="device-icon">🍎</span>
                         <span>macOS & Linux</span>
                     </button>
-                    <button class="tab-btn" data-device="mobile" id="btn-mob">
-                        <span class="tab-device-icon">📱</span>
+                    <button class="device-tab-btn" data-target="mobile">
+                        <span class="device-icon">📱</span>
                         <span>Mobile (Android & iOS)</span>
                     </button>
-                    <button class="tab-btn" data-device="tablet" id="btn-tab">
-                        <span class="tab-device-icon">📟</span>
+                    <button class="device-tab-btn" data-target="tablet">
+                        <span class="device-icon">📟</span>
                         <span>Tablet / iPad</span>
                     </button>
                 </div>
 
-                <!-- Tab Panels -->
-                <div class="tab-panels">
-                    <!-- WINDOWS PANEL -->
-                    <div class="tab-panel active" id="panel-windows">
-                        <div class="panel-layout">
-                            <div class="steps-column">
-                                <div class="step-card">
-                                    <div class="step-badge">1</div>
-                                    <div class="step-info">
-                                        <h4>Download the Application Folder</h4>
-                                        <p>Download the repository zip file and extract it anywhere on your Windows PC (e.g., Desktop or Documents).</p>
-                                        <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent/archive/refs/heads/main.zip" class="btn btn-step">
-                                            📥 Download Auto Job for Windows (.zip)
-                                        </a>
+                <!-- Tab Panels Container -->
+                <div class="tab-stage">
+                    <!-- WINDOWS -->
+                    <div class="tab-slide active" id="pane-win">
+                        <div class="slide-grid">
+                            <div class="slide-main">
+                                <div class="step-sequence">
+                                    <div class="seq-step">
+                                        <div class="seq-badge">01</div>
+                                        <div class="seq-text">
+                                            <h4>Download & Extract the Application Package</h4>
+                                            <p>Download the latest zip package from GitHub and extract it to any folder on your computer.</p>
+                                            <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent/archive/refs/heads/main.zip" class="btn btn-action-step">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                Download Windows Package (.zip)
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">2</div>
-                                    <div class="step-info">
-                                        <h4>Double-Click <code>launcher.bat</code></h4>
-                                        <p>Inside the extracted folder, double-click <code>launcher.bat</code>. It starts the modern Desktop GUI directly without requiring any command prompt work.</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">02</div>
+                                        <div class="seq-text">
+                                            <h4>Double-Click <code>launcher.bat</code></h4>
+                                            <p>Simply double-click <code>launcher.bat</code> inside the extracted folder. It immediately opens the modern desktop interface without requiring any terminal work.</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">3</div>
-                                    <div class="step-info">
-                                        <h4>Add Your Free Key & Click Start</h4>
-                                        <p>In the GUI's <strong>Keys</strong> tab, paste your free Google Gemini API key (<a href="#free-key">get one free here</a>), upload your resume, and tap <strong>Start Swarm</strong>!</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">03</div>
+                                        <div class="seq-text">
+                                            <h4>Paste Your Free Key & Click Start</h4>
+                                            <p>In the GUI's <strong>Keys</strong> tab, paste your free Google Gemini API key (<a href="#byok">get one here in 60s</a>), upload your resume, select your spreadsheet, and click <strong>Start Autonomous Swarm</strong>.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="panel-aside">
-                                <div class="aside-card">
+
+                            <aside class="slide-sidebar">
+                                <div class="sidebar-block">
                                     <h4>Windows Requirements</h4>
-                                    <ul class="specs-list">
+                                    <ul class="clean-check-list">
                                         <li>✓ Windows 10 or 11 (64-bit)</li>
                                         <li>✓ Google Chrome installed</li>
                                         <li>✓ Python 3.10+ (free from python.org)</li>
                                         <li>✓ Your own free Gemini key</li>
                                     </ul>
                                 </div>
-                                <div class="aside-card template-card">
-                                    <h4>Download Job Spreadsheet Template</h4>
-                                    <p>Need a spreadsheet to list your dream jobs? Use our tested template:</p>
-                                    <a href="jobs_template.xlsx" download class="btn btn-outline-full">
-                                        Download jobs_template.xlsx
+
+                                <div class="sidebar-block template-call">
+                                    <h4>Pre-Formatted Job Sheet</h4>
+                                    <p>Download our sample spreadsheet, paste your dream job URLs, and drop it into the app.</p>
+                                    <a href="jobs_template.xlsx" download class="btn btn-template-download">
+                                        📥 Download jobs_template.xlsx
                                     </a>
                                 </div>
-                            </div>
+                            </aside>
                         </div>
                     </div>
 
-                    <!-- MAC & LINUX PANEL -->
-                    <div class="tab-panel" id="panel-mac">
-                        <div class="panel-layout">
-                            <div class="steps-column">
-                                <div class="step-card">
-                                    <div class="step-badge">1</div>
-                                    <div class="step-info">
-                                        <h4>Clone the Repository</h4>
-                                        <p>Open your Terminal app and clone the repository with one command:</p>
-                                        <div class="terminal-command">
-                                            <code>git clone https://github.com/meeran-ahmed/auto-apply-job-Agent.git && cd auto-apply-job-Agent</code>
-                                            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+                    <!-- MAC & LINUX -->
+                    <div class="tab-slide" id="pane-mac">
+                        <div class="slide-grid">
+                            <div class="slide-main">
+                                <div class="step-sequence">
+                                    <div class="seq-step">
+                                        <div class="seq-badge">01</div>
+                                        <div class="seq-text">
+                                            <h4>Clone the Repository</h4>
+                                            <p>Open Terminal and clone the project to your local workstation:</p>
+                                            <div class="code-terminal-box">
+                                                <code>git clone https://github.com/meeran-ahmed/auto-apply-job-Agent.git && cd auto-apply-job-Agent</code>
+                                                <button class="btn-copy-code" onclick="copySnippet(this)">Copy</button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">2</div>
-                                    <div class="step-info">
-                                        <h4>Run the 1-Click Shell Launcher</h4>
-                                        <p>Run the launcher script to open the Desktop application:</p>
-                                        <div class="terminal-command">
-                                            <code>chmod +x launcher.sh && ./launcher.sh</code>
-                                            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">02</div>
+                                        <div class="seq-text">
+                                            <h4>Execute <code>launcher.sh</code></h4>
+                                            <p>Run the launcher script to open the desktop application with virtualenv isolation:</p>
+                                            <div class="code-terminal-box">
+                                                <code>chmod +x launcher.sh && ./launcher.sh</code>
+                                                <button class="btn-copy-code" onclick="copySnippet(this)">Copy</button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">3</div>
-                                    <div class="step-info">
-                                        <h4>Save Profile & Start</h4>
-                                        <p>Fill in your contact details, upload your PDF resume, paste your free Gemini API key, and launch the automation.</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">03</div>
+                                        <div class="seq-text">
+                                            <h4>Configure Profile & Start</h4>
+                                            <p>Input your details, attach your resume, enter your personal Gemini API key, and begin submitting.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="panel-aside">
-                                <div class="aside-card">
+
+                            <aside class="slide-sidebar">
+                                <div class="sidebar-block">
                                     <h4>Mac & Linux Specs</h4>
-                                    <ul class="specs-list">
+                                    <ul class="clean-check-list">
                                         <li>✓ macOS Ventura, Sonoma, Sequoia</li>
-                                        <li>✓ Apple Silicon M1/M2/M3 & Intel</li>
+                                        <li>✓ Apple Silicon (M1/M2/M3/M4) & Intel</li>
                                         <li>✓ Ubuntu 20.04+, Debian, Fedora</li>
                                         <li>✓ Chrome or Chromium</li>
                                     </ul>
                                 </div>
-                            </div>
+                            </aside>
                         </div>
                     </div>
 
-                    <!-- MOBILE (COLAB) PANEL -->
-                    <div class="tab-panel" id="panel-mobile">
-                        <div class="panel-layout">
-                            <div class="steps-column">
-                                <div class="step-card">
-                                    <div class="step-badge">1</div>
-                                    <div class="step-info">
-                                        <h4>Open the Mobile Cloud Runner</h4>
-                                        <p>Phones cannot run background desktop Selenium browsers natively. We built a <strong>1-Click Google Colab Notebook</strong> that runs the headless browser inside Google's free cloud servers at $0 cost!</p>
-                                        <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" rel="noopener" class="btn btn-step">
-                                            📱 Open Mobile Runner in Google Colab
-                                        </a>
+                    <!-- MOBILE -->
+                    <div class="tab-slide" id="pane-mobile">
+                        <div class="slide-grid">
+                            <div class="slide-main">
+                                <div class="step-sequence">
+                                    <div class="seq-step">
+                                        <div class="seq-badge">01</div>
+                                        <div class="seq-text">
+                                            <h4>Open the Free Cloud Runner in Google Colab</h4>
+                                            <p>Smartphones cannot run background desktop Selenium browsers natively. We built a <strong>1-Click Google Colab Runner</strong> that runs the headless browser inside Google's free cloud servers at $0 cost!</p>
+                                            <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" rel="noopener" class="btn btn-colab-launch">
+                                                📱 Open 1-Click Mobile Runner in Google Colab
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">2</div>
-                                    <div class="step-info">
-                                        <h4>Run Step 1 & Fill Your Profile</h4>
-                                        <p>Tap the Play button on Step 1 to install the cloud browser. In Step 2, enter your name, email, phone, upload your resume from your phone, and paste your free Gemini key.</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">02</div>
+                                        <div class="seq-text">
+                                            <h4>Tap Play on Step 1 & Fill Your Info</h4>
+                                            <p>Run Step 1 to install the cloud browser. In Step 2, enter your name, email, phone, upload your resume from your phone, and enter your free Gemini key.</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">3</div>
-                                    <div class="step-info">
-                                        <h4>Tap Play on Step 3 ➔ Auto-Download Report</h4>
-                                        <p>Google's free cloud environment applies to every job. When finished, your phone will automatically download <code>APPLICATIONS_REPORT.md</code> showing all application receipts.</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">03</div>
+                                        <div class="seq-text">
+                                            <h4>Tap Play on Step 3 ➔ Auto-Download Audit Report</h4>
+                                            <p>The cloud browser will automatically apply to every job. When finished, your phone will automatically download <code>APPLICATIONS_REPORT.md</code> showing all application receipts.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="panel-aside">
-                                <div class="aside-card">
+
+                            <aside class="slide-sidebar">
+                                <div class="sidebar-block">
                                     <h4>Why Colab for Mobile?</h4>
-                                    <ul class="specs-list">
-                                        <li>✓ Works on iPhone & Android</li>
+                                    <ul class="clean-check-list">
+                                        <li>✓ Runs on iPhone & Android</li>
                                         <li>✓ Zero battery drain on your phone</li>
-                                        <li>✓ Google provides compute for free</li>
+                                        <li>✓ Google provides the compute for free</li>
                                         <li>✓ 100% private to your Google account</li>
                                     </ul>
                                 </div>
-                            </div>
+                            </aside>
                         </div>
                     </div>
 
-                    <!-- TABLET PANEL -->
-                    <div class="tab-panel" id="panel-tablet">
-                        <div class="panel-layout">
-                            <div class="steps-column">
-                                <div class="step-card">
-                                    <div class="step-badge">1</div>
-                                    <div class="step-info">
-                                        <h4>Launch on Your iPad or Tablet</h4>
-                                        <p>Open Safari or Chrome on your tablet and open the Google Colab runner:</p>
-                                        <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" rel="noopener" class="btn btn-step">
-                                            📟 Open Tablet Runner in Google Colab
-                                        </a>
+                    <!-- TABLET -->
+                    <div class="tab-slide" id="pane-tablet">
+                        <div class="slide-grid">
+                            <div class="slide-main">
+                                <div class="step-sequence">
+                                    <div class="seq-step">
+                                        <div class="seq-badge">01</div>
+                                        <div class="seq-text">
+                                            <h4>Launch on iPad or Android Tablet</h4>
+                                            <p>Open Safari or Chrome on your tablet and tap below to launch the cloud workspace:</p>
+                                            <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" rel="noopener" class="btn btn-colab-launch">
+                                                📟 Open Tablet Runner in Google Colab
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">2</div>
-                                    <div class="step-info">
-                                        <h4>Upload Files Directly from Files App</h4>
-                                        <p>Select your PDF resume and Excel file right from your iPad or Android tablet's Files app.</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">02</div>
+                                        <div class="seq-text">
+                                            <h4>Upload Files Directly from Files App</h4>
+                                            <p>Select your PDF resume and Excel file right from your iPad or Android tablet's Files app.</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="step-card">
-                                    <div class="step-badge">3</div>
-                                    <div class="step-info">
-                                        <h4>Watch Execution & Receive Report</h4>
-                                        <p>Watch live progress and receive your Markdown and JSON audit ledgers directly in your Downloads folder.</p>
+
+                                    <div class="seq-step">
+                                        <div class="seq-badge">03</div>
+                                        <div class="seq-text">
+                                            <h4>Watch Execution & Receive Report</h4>
+                                            <p>Watch live progress and receive your Markdown and JSON audit ledgers directly in your Downloads folder.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="panel-aside">
-                                <div class="aside-card">
+
+                            <aside class="slide-sidebar">
+                                <div class="sidebar-block">
                                     <h4>Tablet Compatibility</h4>
-                                    <ul class="specs-list">
+                                    <ul class="clean-check-list">
                                         <li>✓ Apple iPad (iPadOS 15+)</li>
                                         <li>✓ Android Tablets (Samsung, Lenovo)</li>
                                         <li>✓ Chromebooks</li>
-                                        <li>✓ Zero storage overhead</li>
+                                        <li>✓ Zero local storage used</li>
                                     </ul>
                                 </div>
-                            </div>
+                            </aside>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- FREE GEMINI API KEY EXPLANATION (CRITICAL) -->
-        <section class="free-key-section" id="free-key">
+        <!-- BRING YOUR OWN FREE KEY (BYOK) SECTION -->
+        <section class="byok-section" id="byok">
             <div class="container">
-                <div class="key-card">
-                    <div class="key-header">
-                        <span class="section-tag">Dedicated & Private</span>
-                        <h2 class="section-title">Why You Use Your Own Free Google Gemini API Key</h2>
-                        <p class="key-intro">
-                            Auto Job does <strong>not</strong> use a shared developer key. Every user brings their own personal, 100% free key from Google AI Studio. Here is why this is essential:
+                <div class="byok-master-card">
+                    <div class="byok-header">
+                        <span class="section-eyebrow">SECURITY & QUOTA ARCHITECTURE</span>
+                        <h2 class="section-headline">Why You Use Your Own Free Gemini API Key</h2>
+                        <p class="section-description">
+                            Auto Job does <strong>not</strong> use a shared developer key. Every applicant brings their personal, 100% free key from Google AI Studio. Here is why this protects everyone:
                         </p>
                     </div>
 
-                    <div class="key-grid">
-                        <div class="key-benefit">
-                            <div class="k-icon">🆓</div>
-                            <h4>Google Gives It Away for Free</h4>
-                            <p>Google AI Studio provides every Gmail account with <strong>15 requests per minute and 1,000,000 tokens daily</strong> at zero cost. <strong>No credit card is required.</strong></p>
+                    <div class="byok-grid">
+                        <div class="byok-pill-box">
+                            <div class="byok-icon">🆓</div>
+                            <h4>1. Google Gives It Free</h4>
+                            <p>Google AI Studio provides every standard Gmail account with <strong>15 requests per minute and 1,000,000 tokens daily</strong> at zero cost. <strong>No credit card is required.</strong></p>
                         </div>
-                        <div class="key-benefit">
-                            <div class="k-icon">⚡</div>
-                            <h4>Zero Rate Limit Collisions</h4>
-                            <p>If hundreds of users shared Meeran's single API key, Google would throttle or block the key immediately. Using your own key gives you a dedicated, unthrottled line.</p>
+
+                        <div class="byok-pill-box">
+                            <div class="byok-icon">⚡</div>
+                            <h4>2. Zero Rate Limit Bottlenecks</h4>
+                            <p>If hundreds of applicants shared Meeran's single developer API key, Google would throttle or block the key immediately. Using your own key gives you a dedicated, unthrottled line.</p>
                         </div>
-                        <div class="key-benefit">
-                            <div class="k-icon">🔒</div>
-                            <h4>Complete Privacy & Isolation</h4>
+
+                        <div class="byok-pill-box">
+                            <div class="byok-icon">🔒</div>
+                            <h4>3. Complete Privacy & Isolation</h4>
                             <p>Your API key is saved exclusively in your local <code>data_folder/secrets.yaml</code> file. It is never transmitted to any external server or saved in Git.</p>
                         </div>
                     </div>
 
-                    <!-- 3-Step Tutorial -->
-                    <div class="key-tutorial">
-                        <h3>Get Your Free Key in 60 Seconds:</h3>
-                        <div class="tutorial-steps">
-                            <div class="t-step">
-                                <div class="t-num">1</div>
-                                <div>
+                    <!-- 3-Step Free Key Guide -->
+                    <div class="key-walkthrough-panel">
+                        <div class="panel-heading">
+                            <h3>How to Grab Your Free Key in 60 Seconds:</h3>
+                        </div>
+                        <div class="key-steps-row">
+                            <div class="k-step-box">
+                                <span class="k-num">1</span>
+                                <div class="k-desc">
                                     <strong>Go to Google AI Studio</strong>
-                                    <p>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> and log in with any Gmail account.</p>
+                                    <p>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> and sign in with any standard Gmail account.</p>
                                 </div>
                             </div>
-                            <div class="t-step">
-                                <div class="t-num">2</div>
-                                <div>
+                            <div class="k-step-box">
+                                <span class="k-num">2</span>
+                                <div class="k-desc">
                                     <strong>Click "Create API Key"</strong>
                                     <p>Click the blue button and choose "Create API key in new project". Copy your generated key.</p>
                                 </div>
                             </div>
-                            <div class="t-step">
-                                <div class="t-num">3</div>
-                                <div>
+                            <div class="k-step-box">
+                                <span class="k-num">3</span>
+                                <div class="k-desc">
                                     <strong>Paste in Auto Job GUI</strong>
                                     <p>Open Auto Job's <strong>Keys</strong> tab (or in the Colab form) and paste your key. You are ready to apply infinitely!</p>
                                 </div>
@@ -424,47 +511,39 @@
             </div>
         </section>
 
-        <!-- CAPABILITIES SECTION -->
-        <section class="features-section" id="features">
+        <!-- INTERACTIVE QUOTA & TOKEN CALCULATOR -->
+        <section class="calculator-section" id="calculator">
             <div class="container">
-                <div class="section-heading-block">
-                    <span class="section-tag">Core Features</span>
-                    <h2 class="section-title">Built to Handle Complex Job Portals</h2>
-                    <p class="section-subtitle">
-                        Standard autofill extensions break on dynamic career pages. Auto Job uses multi-engine browser automation to navigate and submit.
-                    </p>
-                </div>
+                <div class="calc-card">
+                    <div class="calc-left">
+                        <span class="section-eyebrow">QUOTA CALCULATOR</span>
+                        <h3>See How Much You Can Apply for $0.00</h3>
+                        <p>Google's free tier gives you 1,000,000 tokens every single day. Drag the slider to see how many jobs you can submit without paying a dime.</p>
 
-                <div class="features-grid">
-                    <div class="feature-box">
-                        <div class="fb-icon">🎯</div>
-                        <h4>Greenhouse, Lever & Ashby Support</h4>
-                        <p>Automatically detects target ATS software, handles nested iframes, populates contact details, and triggers the submission buttons.</p>
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span>Target Applications per Day:</span>
+                                <strong id="calc-jobs-val">50 Jobs</strong>
+                            </div>
+                            <input type="range" id="jobs-slider" min="10" max="250" value="50" step="5">
+                        </div>
                     </div>
-                    <div class="feature-box">
-                        <div class="fb-icon">📊</div>
-                        <h4>Excel Formula & Hyperlink Parser</h4>
-                        <p>Extracts URLs from Excel <code>=HYPERLINK()</code> formulas, handles company redirect trackers, and cleans application links automatically.</p>
-                    </div>
-                    <div class="feature-box">
-                        <div class="fb-icon">📎</div>
-                        <h4>Automated Resume Attachment</h4>
-                        <p>Locates file inputs across various layouts and attaches your PDF resume without browser security warnings.</p>
-                    </div>
-                    <div class="feature-box">
-                        <div class="fb-icon">🤖</div>
-                        <h4>AI-Powered Questionnaire Filling</h4>
-                        <p>Answers custom application questions (e.g. "Why do you want to join?", "Years of React experience") using your own free Gemini key.</p>
-                    </div>
-                    <div class="feature-box">
-                        <div class="fb-icon">🛡️</div>
-                        <h4>Safe Pacing & Account Protection</h4>
-                        <p>Does not touch LinkedIn automation by default, keeping your professional social accounts 100% safe from flagging.</p>
-                    </div>
-                    <div class="feature-box">
-                        <div class="fb-icon">📑</div>
-                        <h4>Executive Audit Reports</h4>
-                        <p>Generates detailed <code>APPLICATIONS_REPORT.md</code> and <code>success.json</code> files containing timestamps and direct confirmation links.</p>
+
+                    <div class="calc-right">
+                        <div class="calc-metric-box">
+                            <div class="calc-metric">
+                                <span class="cm-label">Estimated Gemini Tokens Used:</span>
+                                <span class="cm-val" id="calc-tokens">~125,000 Tokens</span>
+                            </div>
+                            <div class="calc-metric">
+                                <span class="cm-label">Daily Free Quota Consumed:</span>
+                                <span class="cm-val cm-green" id="calc-pct">12.5% of Daily Free Allowance</span>
+                            </div>
+                            <div class="calc-metric">
+                                <span class="cm-label">Total Cost to You:</span>
+                                <span class="cm-val cm-highlight">$0.00 / Free Forever</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -473,48 +552,48 @@
         <!-- FAQ SECTION -->
         <section class="faq-section" id="faq">
             <div class="container">
-                <div class="section-heading-block">
-                    <span class="section-tag">Questions & Answers</span>
-                    <h2 class="section-title">Frequently Asked Questions</h2>
+                <div class="section-intro">
+                    <span class="section-eyebrow">FREQUENTLY ASKED QUESTIONS</span>
+                    <h2 class="section-headline">Everything You Need to Know</h2>
                 </div>
 
-                <div class="faq-list">
-                    <div class="faq-item">
-                        <button class="faq-toggle">
-                            <span>Is Auto Job completely free to use?</span>
-                            <span class="faq-arrow">▼</span>
+                <div class="faq-deck">
+                    <div class="faq-unit">
+                        <button class="faq-trigger">
+                            <span>Is Auto Job really 100% free? Are there any hidden fees?</span>
+                            <span class="faq-symbol">+</span>
                         </button>
-                        <div class="faq-answer">
-                            <p><strong>Yes, 100% free.</strong> Auto Job is open-source under the MIT license. There are no monthly fees, no hidden limits, and no credit card required. The browser automation runs locally on your computer or in Google Colab's free cloud environment.</p>
+                        <div class="faq-tray">
+                            <p><strong>Yes, 100% free.</strong> Auto Job is open-source software published under the MIT License. The browser automation executes on your own machine or inside Google Colab's free cloud environment. AI screening answers utilize Google's free Gemini 1.5 Flash tier (1M tokens/day with zero credit card).</p>
                         </div>
                     </div>
 
-                    <div class="faq-item">
-                        <button class="faq-toggle">
-                            <span>Will anyone's API key be charged?</span>
-                            <span class="faq-arrow">▼</span>
+                    <div class="faq-unit">
+                        <button class="faq-trigger">
+                            <span>Will anyone's API key be billed or charged?</span>
+                            <span class="faq-symbol">+</span>
                         </button>
-                        <div class="faq-answer">
-                            <p><strong>No.</strong> Neither you nor the developer (Meeran) will ever be charged. Google AI Studio provides every Gmail account with 1,000,000 free tokens every single day with no billing account required.</p>
+                        <div class="faq-tray">
+                            <p><strong>No.</strong> Neither you nor the developer (Meeran) will ever be charged. Google AI Studio provides every personal Google account with 15 requests per minute and 1,000,000 tokens daily completely free of charge.</p>
                         </div>
                     </div>
 
-                    <div class="faq-item">
-                        <button class="faq-toggle">
-                            <span>Does this tool automate on LinkedIn?</span>
-                            <span class="faq-arrow">▼</span>
+                    <div class="faq-unit">
+                        <button class="faq-trigger">
+                            <span>Does Auto Job automate on LinkedIn?</span>
+                            <span class="faq-symbol">+</span>
                         </button>
-                        <div class="faq-answer">
+                        <div class="faq-tray">
                             <p>No. By default, Auto Job applies directly through company applicant tracking systems (Greenhouse, Lever, Ashby, Workable, etc.) via your custom spreadsheet. It strictly avoids LinkedIn to ensure your personal LinkedIn profile is never flagged or banned.</p>
                         </div>
                     </div>
 
-                    <div class="faq-item">
-                        <button class="faq-toggle">
+                    <div class="faq-unit">
+                        <button class="faq-trigger">
                             <span>Is my resume and personal contact information private?</span>
-                            <span class="faq-arrow">▼</span>
+                            <span class="faq-symbol">+</span>
                         </button>
-                        <div class="faq-answer">
+                        <div class="faq-tray">
                             <p>Yes. Your resume, phone number, address, and credentials are saved locally in your own <code>data_folder/</code>. They are never transmitted to any third-party server.</p>
                         </div>
                     </div>
@@ -522,34 +601,37 @@
             </div>
         </section>
 
-        <!-- CREATOR PROFILE -->
+        <!-- CREATOR SECTION -->
         <section class="creator-section">
-            <div class="container creator-box">
-                <div class="creator-avatar">MA</div>
-                <div class="creator-text">
-                    <h3>Created & Maintained by Meeran Ahmed</h3>
-                    <p>Full Stack & AI Engineer. Committed to building practical, free, and open-source automation tools to help job seekers find opportunities faster.</p>
-                    <div class="creator-buttons">
-                        <a href="https://meeran-portfolio.antideploy.app" target="_blank" rel="noopener" class="btn btn-outline">
-                            Visit Portfolio ↗
-                        </a>
-                        <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener" class="btn btn-outline">
-                            Star on GitHub ⭐
-                        </a>
+            <div class="container creator-wrap">
+                <div class="creator-card">
+                    <div class="creator-badge-avatar">MA</div>
+                    <div class="creator-bio-block">
+                        <span class="creator-role">CREATED & MAINTAINED BY</span>
+                        <h3 class="creator-name">Meeran Ahmed R.</h3>
+                        <p class="creator-desc">Full Stack & AI Systems Engineer. Passionate about empowering tech professionals with open-source automation tools.</p>
+                        <div class="creator-actions">
+                            <a href="https://meeran-portfolio.antideploy.app" target="_blank" rel="noopener" class="btn btn-creator-link">
+                                🌐 View Portfolio
+                            </a>
+                            <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener" class="btn btn-creator-link">
+                                ⭐ Star on GitHub
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer -->
+    <!-- Global Footer -->
     <footer class="footer">
-        <div class="container footer-grid">
-            <div>
+        <div class="container footer-content">
+            <div class="footer-left">
                 <strong>Auto Job Application Agent</strong>
                 <p>Open Source Software under the MIT License • Built by Meeran Ahmed</p>
             </div>
-            <div class="footer-links">
+            <div class="footer-right">
                 <a href="#navbar">Back to Top ↑</a>
                 <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener">GitHub</a>
                 <a href="https://meeran-portfolio.antideploy.app" target="_blank" rel="noopener">Portfolio</a>

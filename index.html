@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniSwarm — Free Autonomous AI Job Application Engine</title>
+    <meta name="description" content="100% Free, autonomous multi-agent job application engine. Apply to tech jobs across Greenhouse, Lever, Ashby, and Workable in seconds on Desktop, Mobile, and Tablets.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Glows -->
+    <div class="glow-bg glow-top"></div>
+    <div class="glow-bg glow-bottom"></div>
+
+    <!-- Navigation -->
+    <header class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="brand">
+                <span class="brand-icon">🚀</span>
+                <span class="brand-name">OmniSwarm</span>
+                <span class="badge-free">100% FREE</span>
+            </a>
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#downloads">Downloads</a>
+                <a href="#mobile-runner">Mobile Cloud</a>
+                <a href="#gemini-guide">Free API Key</a>
+                <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener" class="btn-github">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    GitHub
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main>
+        <section class="hero-section" id="hero">
+            <div class="container hero-content">
+                <div class="badge-pill">
+                    <span class="pulsing-dot"></span>
+                    <span>Zero Subscription Fees • $0 Server Cost • Multi-Platform</span>
+                </div>
+                <h1 class="hero-title">
+                    The Autonomous AI Job Swarm <br>
+                    <span class="gradient-text">Built for Every Job Seeker.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Stop wasting 40+ hours every week hand-typing the same contact details, cover letters, and resume uploads. OmniSwarm deploys intelligent browser agents that auto-fill and submit verified jobs across Greenhouse, Lever, Ashby, Workable, and Keka.
+                </p>
+                <div class="hero-cta-group">
+                    <a href="#downloads" class="btn btn-primary" id="cta-download">
+                        <span>⚡ Download Desktop App</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </a>
+                    <a href="#mobile-runner" class="btn btn-secondary" id="cta-mobile">
+                        <span>📱 1-Click Mobile Cloud Runner</span>
+                    </a>
+                </div>
+                <div class="stats-ribbon">
+                    <div class="stat-item">
+                        <span class="stat-number">88+</span>
+                        <span class="stat-label">Applications Auto-Submitted</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number">$0.00</span>
+                        <span class="stat-label">Total Cost to You</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Local & Private Resume Data</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Demo GUI Preview -->
+        <section class="preview-section">
+            <div class="container">
+                <div class="glass-card terminal-card">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span class="terminal-title">OmniSwarm Desktop Console — Live Multi-Engine Session</span>
+                        <div class="terminal-badge">RUNNING LOCAL</div>
+                    </div>
+                    <div class="terminal-body" id="terminal-output">
+                        <p class="term-line term-cyan">[SWARM] Initializing Autonomous Browser Swarm (EXCEL mode, limit: 50)...</p>
+                        <p class="term-line term-green">[SUCCESS] Loaded Candidate Profile: Meeran Ahmed R. (Full Stack / Python / React)</p>
+                        <p class="term-line term-yellow">[INFO] Reading Spreadsheet: jobs.xlsx (52 active vacancies discovered)...</p>
+                        <p class="term-line">[1/52] Navigating: Cardiff Software Engineer -> Detected ATS: Greenhouse Universal</p>
+                        <p class="term-line term-green">  ✓ Uploaded resume.pdf (88 KB)</p>
+                        <p class="term-line term-green">  ✓ Auto-filled: First Name, Last Name, Email, Phone (+91), Portfolio URL</p>
+                        <p class="term-line term-green">  ✓ Submitted application successfully to Cardiff!</p>
+                        <p class="term-line">[2/52] Navigating: SupportYourApp -> Detected ATS: Ashby HQ</p>
+                        <p class="term-line term-green">  ✓ Uploaded resume.pdf & submitted application successfully!</p>
+                        <p class="term-line term-cyan">✨ Ledger updated: 88 total verified applications recorded in APPLICATIONS_REPORT.md</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multi-Platform Downloads -->
+        <section class="downloads-section" id="downloads">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Download OmniSwarm for Your Device</h2>
+                    <p class="section-subtitle">Runs 100% locally on your computer. No accounts, no subscriptions, no tracking.</p>
+                </div>
+                <div class="downloads-grid">
+                    <!-- Windows Card -->
+                    <div class="download-card highlight-card">
+                        <div class="card-icon">🪟</div>
+                        <h3>Windows</h3>
+                        <p class="card-desc">Windows 10 / 11 (64-bit). Includes modern Dark Mode GUI and 1-click launcher.</p>
+                        <ul class="card-specs">
+                            <li>✓ 1-Click <code>launcher.bat</code> launcher</li>
+                            <li>✓ CustomTkinter Dark Mode GUI</li>
+                            <li>✓ Excel & CSV spreadsheet picker</li>
+                        </ul>
+                        <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent/archive/refs/heads/main.zip" class="btn btn-primary btn-block">
+                            Download for Windows (.zip)
+                        </a>
+                        <span class="card-subnote">Double-click <code>launcher.bat</code> to launch</span>
+                    </div>
+
+                    <!-- Mac & Linux Card -->
+                    <div class="download-card">
+                        <div class="card-icon">🍎 / 🐧</div>
+                        <h3>macOS & Linux</h3>
+                        <p class="card-desc">Compatible with Apple Silicon (M1/M2/M3), Intel Macs, and Ubuntu/Debian.</p>
+                        <ul class="card-specs">
+                            <li>✓ Native <code>launcher.sh</code> shell launcher</li>
+                            <li>✓ Isolated Chrome profile sandbox</li>
+                            <li>✓ Zero root or sudo permissions needed</li>
+                        </ul>
+                        <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" class="btn btn-secondary btn-block">
+                            View on GitHub
+                        </a>
+                        <span class="card-subnote">Run <code>chmod +x launcher.sh && ./launcher.sh</code></span>
+                    </div>
+
+                    <!-- Mobile Cloud Card -->
+                    <div class="download-card" id="mobile-runner">
+                        <div class="card-icon">📱</div>
+                        <h3>Mobile & Tablet Cloud</h3>
+                        <p class="card-desc">Run on iPhone, Android, iPad, or Chromebook without a laptop using Google Colab.</p>
+                        <ul class="card-specs">
+                            <li>✓ 100% Free Google Cloud VM</li>
+                            <li>✓ Zero installations on your phone</li>
+                            <li>✓ Automatic report download to device</li>
+                        </ul>
+                        <a href="https://colab.research.google.com/github/meeran-ahmed/auto-apply-job-Agent/blob/main/OmniSwarm_Mobile_Runner.ipynb" target="_blank" class="btn btn-cyan btn-block">
+                            Open 1-Click Mobile Runner
+                        </a>
+                        <span class="card-subnote">Runs in Google Colab's free sandbox</span>
+                    </div>
+                </div>
+
+                <!-- Template Download Callout -->
+                <div class="template-callout">
+                    <div class="template-callout-content">
+                        <span class="template-icon">📊</span>
+                        <div>
+                            <strong>Need a job links template?</strong>
+                            <p>Download our pre-formatted spreadsheet template, paste your dream job URLs, and let OmniSwarm apply.</p>
+                        </div>
+                    </div>
+                    <a href="jobs_template.xlsx" download="OmniSwarm_Jobs_Template.xlsx" class="btn btn-secondary">
+                        📥 Download Excel Template (.xlsx)
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section class="features-section" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Built with Cutting-Edge Swarm Intelligence</h2>
+                    <p class="section-subtitle">Engineered to bypass applicant bottlenecks without getting blocked.</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feat-icon">🎯</div>
+                        <h4>Multi-Engine ATS Support</h4>
+                        <p>Universal support for Greenhouse, Lever, Ashby, Workable, Recruitee, and Keka application forms with automatic fallback cascades.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">📊</div>
+                        <h4>Excel & Custom URL Importer</h4>
+                        <p>Feed any spreadsheet of job links. Our engine handles HYPERLINK formulas, tracking redirects, and cleans URLs automatically.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">🔒</div>
+                        <h4>100% Local Data Privacy</h4>
+                        <p>Your resume, contact phone, and credentials never touch a remote server. Everything executes locally from your residential IP.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">🤖</div>
+                        <h4>Free Google Gemini Integration</h4>
+                        <p>Powered by Google's free Gemini 1.5 Flash API for context-aware questionnaire responses and cover letter tailoring.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">🛡️</div>
+                        <h4>Anti-Detection & Safe Pacing</h4>
+                        <p>Emulates human mouse movements, randomized scroll intervals, and strict LinkedIn safeguards to keep your accounts completely safe.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">📑</div>
+                        <h4>Executive Markdown Audit</h4>
+                        <p>Automatically compiles an audit report with timestamps, direct confirmation URLs, and failure diagnostics after every single run.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Free Gemini Key Guide -->
+        <section class="gemini-guide-section" id="gemini-guide">
+            <div class="container">
+                <div class="glass-card guide-box">
+                    <div class="guide-header">
+                        <span class="guide-step-tag">FREE AI SETUP</span>
+                        <h3>How to Get Your Free Google Gemini API Key in 60 Seconds</h3>
+                        <p>OmniSwarm utilizes Google's generous free tier (15 requests/min, 1 million tokens/day) with zero credit card required.</p>
+                    </div>
+                    <div class="steps-list">
+                        <div class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <strong>Visit Google AI Studio</strong>
+                                <p>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> and sign in with any standard Google account.</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <strong>Click "Create API Key"</strong>
+                                <p>Click the blue button and choose "Create API key in new project".</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <strong>Paste into OmniSwarm</strong>
+                                <p>Open OmniSwarm's "Keys" tab (or Colab runner), paste your key, and tap Save. You are ready to apply infinitely for free!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Creator Profile & Open Source Section -->
+        <section class="author-section">
+            <div class="container text-center">
+                <h3 class="author-title">Created with ❤️ by Meeran Ahmed</h3>
+                <p class="author-subtitle">Full Stack & AI Engineer • Committed to keeping job application tools accessible to all job seekers.</p>
+                <div class="author-links">
+                    <a href="https://meeran-portfolio.antideploy.app" target="_blank" rel="noopener" class="btn btn-secondary">
+                        🌐 View Portfolio
+                    </a>
+                    <a href="https://github.com/meeran-ahmed/auto-apply-job-Agent" target="_blank" rel="noopener" class="btn btn-secondary">
+                        ⭐ Star on GitHub
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>© 2026 OmniSwarm Project. Free & Open-Source under MIT License.</p>
+            <p class="footer-privacy">Designed for zero-cost public distribution. Your data remains on your machine.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

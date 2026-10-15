@@ -1,171 +1,74 @@
-// Auto Job — Interactive Frontend & GSAP Motion Engine
+// Auto Job — Minimal Client-Side Interactivity
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. GSAP Hero Entrance Animations
-    if (typeof gsap !== 'undefined') {
-        gsap.from('.gsap-hero', {
-            opacity: 0,
-            y: 28,
-            duration: 0.9,
-            stagger: 0.12,
-            ease: 'power3.out'
-        });
+    // 1. Segmented Control Switcher
+    const segmentButtons = document.querySelectorAll('.segment-btn');
+    const platformPanes = document.querySelectorAll('.platform-pane');
 
-        // 2. 3D Tilt Parallax on Terminal Deck
-        const terminalDeck = document.getElementById('terminal-deck');
-        if (terminalDeck) {
-            terminalDeck.addEventListener('mousemove', (e) => {
-                const rect = terminalDeck.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                gsap.to(terminalDeck, {
-                    rotationY: x * 0.04,
-                    rotationX: -y * 0.04,
-                    transformPerspective: 1000,
-                    ease: 'power1.out',
-                    duration: 0.4
-                });
-            });
-
-            terminalDeck.addEventListener('mouseleave', () => {
-                gsap.to(terminalDeck, {
-                    rotationY: 0,
-                    rotationX: 0,
-                    ease: 'power2.out',
-                    duration: 0.6
-                });
-            });
-        }
-
-        // 3. ScrollTrigger reveal for pipeline cards
-        if (typeof ScrollTrigger !== 'undefined') {
-            gsap.registerPlugin(ScrollTrigger);
-
-            gsap.from('.pipeline-card', {
-                scrollTrigger: {
-                    trigger: '.pipeline-grid',
-                    start: 'top 80%'
-                },
-                opacity: 0,
-                y: 35,
-                duration: 0.7,
-                stagger: 0.12,
-                ease: 'power2.out'
-            });
-
-            gsap.from('.byok-pill-box', {
-                scrollTrigger: {
-                    trigger: '.byok-grid',
-                    start: 'top 82%'
-                },
-                opacity: 0,
-                y: 25,
-                duration: 0.6,
-                stagger: 0.1,
-                ease: 'power2.out'
-            });
-        }
-    }
-
-    // 4. Device Tab Switcher
-    const tabButtons = document.querySelectorAll('.device-tab-btn');
-    const tabSlides = document.querySelectorAll('.tab-slide');
-
-    tabButtons.forEach(btn => {
+    segmentButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            const target = btn.getAttribute('data-target');
+            const target = btn.getAttribute('data-tab');
 
-            tabButtons.forEach(b => b.classList.remove('active'));
-            tabSlides.forEach(s => s.classList.remove('active'));
+            segmentButtons.forEach(b => b.classList.remove('active'));
+            platformPanes.forEach(p => p.classList.remove('active'));
 
             btn.classList.add('active');
-            const activeSlide = document.getElementById(`pane-${target}`);
-            if (activeSlide) {
-                activeSlide.classList.add('active');
-                if (typeof gsap !== 'undefined') {
-                    gsap.fromTo(activeSlide, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
-                }
+            const activePane = document.getElementById(`pane-${target}`);
+            if (activePane) {
+                activePane.classList.add('active');
             }
         });
     });
 
-    // 5. Interactive Quota Calculator
-    const slider = document.getElementById('jobs-slider');
-    const jobsVal = document.getElementById('calc-jobs-val');
-    const tokensVal = document.getElementById('calc-tokens');
-    const pctVal = document.getElementById('calc-pct');
-
-    if (slider) {
-        const updateCalc = () => {
-            const jobs = parseInt(slider.value, 10);
-            jobsVal.textContent = `${jobs} Jobs`;
-
-            // Approx 2,500 tokens per full screening analysis & auto-fill
-            const tokens = jobs * 2500;
-            tokensVal.textContent = `~${tokens.toLocaleString()} Tokens`;
-
-            // Google provides 1,000,000 free tokens daily per Gmail account
-            const pct = ((tokens / 1000000) * 100).toFixed(1);
-            pctVal.textContent = `${pct}% of Daily Free Allowance (1M tokens)`;
-        };
-
-        slider.addEventListener('input', updateCalc);
-        updateCalc();
-    }
-
-    // 6. FAQ Accordion Toggle
-    const faqUnits = document.querySelectorAll('.faq-unit');
-    faqUnits.forEach(unit => {
-        const trigger = unit.querySelector('.faq-trigger');
+    // 2. FAQ Accordion
+    const accItems = document.querySelectorAll('.acc-item');
+    accItems.forEach(item => {
+        const trigger = item.querySelector('.acc-trigger');
         trigger.addEventListener('click', () => {
-            const isOpen = unit.classList.contains('open');
-            faqUnits.forEach(u => u.classList.remove('open'));
+            const isOpen = item.classList.contains('open');
+            accItems.forEach(i => i.classList.remove('open'));
             if (!isOpen) {
-                unit.classList.add('open');
+                item.classList.add('open');
             }
         });
     });
 
-    // 7. Simulated Live Console Output (Strictly Generic Company Names)
-    const consoleScreen = document.getElementById('console-screen');
-    if (consoleScreen) {
-        const genericLogs = [
-            "[00:06.15] Job 3: Globex Systems — Distributed Systems Engineer",
-            "↳ Detected ATS: Greenhouse Universal Form",
-            "  ✓ Injected candidate profile & uploaded resume.pdf",
-            "  ✓ Submission verified! Received HTTP 200 receipt",
-            "[00:09.42] Job 4: CloudScale Data — Backend Engineer",
-            "↳ Detected ATS: Lever Universal Application Adapter",
-            "  ✓ Attached PDF resume & submitted candidate application",
-            "★ Total verified applications updated in audit ledger"
+    // 3. Simulated Terminal Log (Strictly Generic Company Targets)
+    const terminalScreen = document.getElementById('terminal-screen');
+    if (terminalScreen) {
+        const sampleLogs = [
+            "[03/50] Navigating to target: Globex Data — Distributed Systems Engineer",
+            "↳ ATS identified: Lever Universal Application Form",
+            "✓ Attached candidate credentials & uploaded PDF resume",
+            "✓ Submission complete! Status 200 OK",
+            "[04/50] Navigating to target: CloudScale Infrastructure — Python Backend Engineer",
+            "✓ Application submitted successfully via Direct ATS adapter"
         ];
 
-        let logIdx = 0;
+        let index = 0;
         setInterval(() => {
-            if (logIdx < genericLogs.length) {
-                const line = document.createElement('div');
-                line.className = 'c-row c-green';
-                line.textContent = genericLogs[logIdx];
-                consoleScreen.appendChild(line);
-                consoleScreen.scrollTop = consoleScreen.scrollHeight;
-                logIdx++;
+            if (index < sampleLogs.length) {
+                const row = document.createElement('div');
+                row.className = 'log-row log-success';
+                row.textContent = sampleLogs[index];
+                terminalScreen.appendChild(row);
+                terminalScreen.scrollTop = terminalScreen.scrollHeight;
+                index++;
             }
-        }, 4500);
+        }, 5000);
     }
 });
 
-// Global snippet copy handler
-function copySnippet(button) {
+// Copy CLI command helper
+function copyCli(button) {
     const parent = button.parentElement;
     const codeTag = parent.querySelector('code');
     if (codeTag) {
         navigator.clipboard.writeText(codeTag.textContent.trim()).then(() => {
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            button.style.backgroundColor = '#10B981';
+            const prevText = button.textContent;
+            button.textContent = 'Copied';
             setTimeout(() => {
-                button.textContent = originalText;
-                button.style.backgroundColor = '';
+                button.textContent = prevText;
             }, 2000);
         });
     }

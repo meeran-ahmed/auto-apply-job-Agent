@@ -95,3 +95,57 @@ class SwarmOrchestrator:
         logger.info(f"[SUCCESS] SWARM RUN COMPLETE! Final report saved to: {report_path}")
         logger.info("=" * 60)
         return report_path
+
+    def run_excel_batch(self, file_path: str = None, max_jobs: int = 100):
+        from src.agents.excel_batch_agent import ExcelBatchAgent
+        logger.info("=" * 60)
+        logger.info("[OMNISWARM] STARTING SPREADSHEET (EXCEL/CSV) BATCH AUTO-APPLY")
+        logger.info("=" * 60)
+
+        excel_agent = ExcelBatchAgent(file_path)
+        jobs = excel_agent.parse_jobs()
+        if not jobs:
+            logger.warning("[Swarm Orchestrator] No jobs found in spreadsheet to process.")
+            return self.reporter.generate_report()
+
+        logger.info(f"[Swarm Orchestrator] Loaded {len(jobs)} jobs from spreadsheet. Initializing ATS worker...")
+        try:
+            options = chrome_browser_options()
+            service = ChromeService(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=options)
+            ats_worker = ATSAgent(
+                driver=driver,
+                resume_path=self.resume_path,
+                profile_data=self.profile_data,
+                gpt_answerer=None,
+                reporter=self.reporter
+            )
+
+            processed_count = 0
+            for job in jobs:
+                if processed_count >= max_jobs:
+                    break
+
+                if self.reporter.is_already_applied(job.get("url"), job.get("title"), job.get("company")):
+                    logger.info(f"[Swarm Orchestrator] Skipping already applied job: {job.get('title')} at {job.get('company')}")
+                    continue
+
+                logger.info(f"[Swarm Orchestrator] Processing spreadsheet job {processed_count + 1}/{min(len(jobs), max_jobs)}: '{job.get('title')}' at '{job.get('company')}' -> {job.get('url')}")
+                ats_worker.process_job(job)
+                processed_count += 1
+                time.sleep(2)
+
+            try:
+                driver.quit()
+            except Exception:
+                pass
+
+        except Exception as e:
+            logger.error(f"[Swarm Orchestrator] Error during spreadsheet batch run: {e}")
+
+        report_path = self.reporter.generate_report()
+        logger.info("=" * 60)
+        logger.info(f"[SUCCESS] SPREADSHEET BATCH RUN COMPLETE! Final report saved to: {report_path}")
+        logger.info("=" * 60)
+        return report_path
+

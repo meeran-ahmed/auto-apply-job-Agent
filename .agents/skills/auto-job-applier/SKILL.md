@@ -59,6 +59,14 @@ Executes both the global remote swarm and LinkedIn automation sequentially:
 python swarm_main.py --mode all --limit 50
 ```
 
+### Mode D: Custom Excel / CSV Batch Auto-Applier
+Upload or drop any spreadsheet (`.xlsx`, `.xls`, `.csv`) with job links, and the agent will parse and apply to every listed position in the background:
+```bash
+python swarm_main.py --mode excel --file path/to/jobs.xlsx
+```
+*(If `--file` is omitted, the agent auto-detects `data_folder/jobs.xlsx` or any spreadsheet in `data_folder/`)*.
+
+
 ---
 
 ## Agent Inspection & Monitoring

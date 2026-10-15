@@ -5,16 +5,25 @@ from src.agents.orchestrator import SwarmOrchestrator
 
 
 @click.command()
-@click.option('--mode', default='swarm', type=click.Choice(['swarm', 'linkedin', 'all']), help='Swarm mode to execute')
-@click.option('--limit', default=50, type=int, help='Maximum external applications to process in this run')
-def main(mode: str, limit: int):
+@click.option('--mode', default='swarm', type=click.Choice(['swarm', 'linkedin', 'excel', 'all']), help='Execution mode: swarm, linkedin, excel, or all')
+@click.option('--file', default=None, type=str, help='Path to custom Excel (.xlsx, .xls) or CSV spreadsheet with job links')
+@click.option('--limit', default=50, type=int, help='Maximum applications to process in this run')
+def main(mode: str, file: str, limit: int):
     """
     OmniSwarm: Autonomous Multi-Agent Job Application Engine.
-    Coordinates specialized worker agents across job portals, ATS boards,
-    and LinkedIn, generating an executive report upon completion.
+    Coordinates specialized worker agents across job portals, custom Excel sheets,
+    ATS boards, and LinkedIn, generating an executive report upon completion.
     """
     logger.info("Initializing OmniSwarm Multi-Agent Engine...")
     orchestrator = SwarmOrchestrator()
+
+    if mode == 'excel':
+        report_file = orchestrator.run_excel_batch(file_path=file, max_jobs=limit)
+        print("\n" + "=" * 70)
+        print(f"[SUCCESS] SPREADSHEET BATCH APPLICATIONS COMPLETE!")
+        print(f"Full Executive Report: {report_file}")
+        print("=" * 70 + "\n")
+        return
 
     if mode in ['swarm', 'all']:
         report_file = orchestrator.run_swarm(max_external_jobs=limit)

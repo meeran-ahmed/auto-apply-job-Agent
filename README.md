@@ -184,6 +184,14 @@ Runs the remote discovery swarm first, followed by LinkedIn automation:
 python swarm_main.py --mode all --limit 50
 ```
 
+### Option D: Custom Excel / CSV Batch Auto-Apply
+Have a curated list of jobs? Drop an Excel (`.xlsx`, `.xls`) or CSV spreadsheet with job links, and the swarm will process and submit applications to every listed URL:
+```bash
+python swarm_main.py --mode excel --file data_folder/jobs_template.xlsx
+```
+*(If `--file` is omitted, the agent will automatically find and process any `.xlsx` or `.csv` file in `data_folder/`)*. Ready-to-use templates are included at [`data_folder/jobs_template.xlsx`](file:///d:/job%20auto/aihawk/data_folder/jobs_template.xlsx) and [`data_folder/jobs_template.csv`](file:///d:/job%20auto/aihawk/data_folder/jobs_template.csv).
+
+
 ---
 
 ## Use with AI Agents (Antigravity, Cursor, Claude Code, Codex)

@@ -32,6 +32,8 @@ data_folder/*
 !data_folder/secrets.yaml.template
 !data_folder/plain_text_resume.yaml.template
 !data_folder/config.yaml.template
+!data_folder/jobs_template.xlsx
+!data_folder/jobs_template.csv
 answers.json
 scratch/
 # PyInstaller

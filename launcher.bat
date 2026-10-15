@@ -1,14 +1,14 @@
 @echo off
-title OmniSwarm - Autonomous AI Job Application Engine
+title Auto Job - Autonomous Application Agent
 echo ======================================================================
-echo             🚀 OMNISWARM: AI JOB APPLICATION ENGINE
+echo             ⚡ AUTO JOB: APPLICATION AGENT
 echo                      Free & Open Source Edition
 echo ======================================================================
 echo.
 
 :: Check if .venv exists
 if exist ".venv\Scripts\python.exe" (
-    echo [INFO] Starting OmniSwarm with virtual environment...
+    echo [INFO] Starting Auto Job with virtual environment...
     start "" ".venv\Scripts\pythonw.exe" gui_main.py
     if %errorlevel% neq 0 (
         ".venv\Scripts\python.exe" gui_main.py

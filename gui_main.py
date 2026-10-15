@@ -17,7 +17,7 @@ class OmniSwarmGUI(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("OmniSwarm: Autonomous AI Job Application Engine")
+        self.title("Auto Job: Autonomous Multi-Platform Application Agent")
         self.geometry("980x720")
         self.minsize(860, 600)
 
@@ -51,14 +51,14 @@ class OmniSwarmGUI(ctk.CTk):
 
         logo_title = ctk.CTkLabel(
             self.sidebar,
-            text="🚀 OmniSwarm",
+            text="⚡ Auto Job",
             font=ctk.CTkFont(size=22, weight="bold")
         )
         logo_title.grid(row=0, column=0, padx=20, pady=(24, 6))
 
         logo_sub = ctk.CTkLabel(
             self.sidebar,
-            text="AI Job Application Engine\nby Meeran Ahmed",
+            text="Job Application Agent\nby Meeran Ahmed",
             font=ctk.CTkFont(size=12),
             text_color="gray70"
         )

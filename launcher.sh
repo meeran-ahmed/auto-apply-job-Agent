@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# OmniSwarm 1-Click Launcher for macOS & Linux
+# Auto Job 1-Click Launcher for macOS & Linux
 
 echo "======================================================================"
-echo "            🚀 OMNISWARM: AI JOB APPLICATION ENGINE"
+echo "            ⚡ AUTO JOB: APPLICATION AGENT"
 echo "                     Free & Open Source Edition"
 echo "======================================================================"
 echo ""
@@ -12,7 +12,7 @@ cd "$(dirname "$0")"
 
 # Check virtual environment
 if [ -f ".venv/bin/python" ]; then
-    echo "[INFO] Starting OmniSwarm with virtual environment..."
+    echo "[INFO] Starting Auto Job with virtual environment..."
     .venv/bin/python gui_main.py
     exit 0
 fi

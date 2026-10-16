@@ -167,7 +167,7 @@ class OmniSwarmGUI(ctk.CTk):
         self.mode_var = ctk.StringVar(value="excel")
         self.opt_mode = ctk.CTkOptionMenu(
             mode_frame,
-            values=["excel", "swarm"],
+            values=["excel", "swarm", "outreach"],
             variable=self.mode_var,
             command=self._on_mode_change
         )
@@ -227,10 +227,16 @@ class OmniSwarmGUI(ctk.CTk):
         bottom_row.grid(row=4, column=0, sticky="ew")
 
         btn_view_report = ctk.CTkButton(
-            bottom_row, text="📄 Open Applications Report (Markdown)",
+            bottom_row, text="📄 Open Applications Report",
             command=self._open_report, height=32
         )
         btn_view_report.pack(side="left", padx=(0, 8))
+
+        btn_view_outreach = ctk.CTkButton(
+            bottom_row, text="🤝 Open Referral Matrix",
+            command=self._open_outreach_report, height=32, fg_color="#1F6AA5"
+        )
+        btn_view_outreach.pack(side="left", padx=(0, 8))
 
         btn_view_json = ctk.CTkButton(
             bottom_row, text="💾 Open Ledger (JSON)",
@@ -515,6 +521,13 @@ class OmniSwarmGUI(ctk.CTk):
             webbrowser.open(str(self.report_md_path))
         else:
             messagebox.showinfo("Info", "No report generated yet. Run the swarm first!")
+
+    def _open_outreach_report(self):
+        outreach_path = self.output_dir / "REFERRAL_OUTREACH.md"
+        if outreach_path.exists():
+            webbrowser.open(str(outreach_path))
+        else:
+            messagebox.showinfo("Info", "No referral outreach matrix generated yet. Select 'outreach' mode and click start!")
 
     def _open_json(self):
         if self.success_json_path.exists():

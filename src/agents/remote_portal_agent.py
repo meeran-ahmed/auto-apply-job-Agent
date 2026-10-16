@@ -11,12 +11,15 @@ class RemotePortalAgent:
     their direct ATS application endpoints (Greenhouse, Lever, Ashby, etc.).
     """
 
-    def __init__(self, target_positions: List[str] = None):
+    def __init__(self, target_positions: List[str] = None, blacklist: List[str] = None):
         self.target_positions = target_positions or [
             "Full Stack Developer", "Full Stack Engineer",
             "Frontend Developer", "React Developer",
             "Implementation Engineer", "Solutions Engineer", "Software Engineer"
         ]
+        default_blacklist = ["senior", "sr.", "sr ", "staff", "principal", "architect", "lead", "manager", "director", "head of", "vp", "onsite"]
+        combined = set((blacklist or []) + default_blacklist)
+        self.blacklist = [b.lower() for b in combined]
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         }
@@ -46,11 +49,12 @@ class RemotePortalAgent:
 
     def _matches_target(self, title: str) -> bool:
         t = title.lower()
+        if any(b in t for b in self.blacklist):
+            return False
         keywords = [
             "full stack", "fullstack", "frontend", "front-end", "react",
             "software engineer", "developer", "implementation", "solutions",
-            "web", "node", "javascript", "typescript", "python", "engineer",
-            "architect", "consultant", "programmer"
+            "web", "node", "javascript", "typescript", "python"
         ]
         return any(k in t for k in keywords)
 

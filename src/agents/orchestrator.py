@@ -47,7 +47,10 @@ class SwarmOrchestrator:
 
         # 1. Agent: Remote Tech Discovery
         logger.info("[Agent: Discovery] Scanning global remote tech job feeds...")
-        discovery_agent = RemotePortalAgent(self.config.get("positions", []))
+        discovery_agent = RemotePortalAgent(
+            target_positions=self.config.get("positions", []),
+            blacklist=self.config.get("titleBlacklist", [])
+        )
         discovered_jobs = discovery_agent.fetch_all_jobs()
         logger.info(f"[Agent: Discovery] Found {len(discovered_jobs)} matching engineering positions.")
 
@@ -148,4 +151,60 @@ class SwarmOrchestrator:
         logger.info(f"[SUCCESS] SPREADSHEET BATCH RUN COMPLETE! Final report saved to: {report_path}")
         logger.info("=" * 60)
         return report_path
+
+    def generate_outreach(self, max_companies: int = 15) -> str:
+        """
+        Discovers recruiters and synthesizes humanized referral outreach pitches
+        for companies in the applied ledger using `li-dm` and `li-human` skill specifications.
+        """
+        from src.agents.recruiter_scout import RecruiterScout
+        from src.agents.outreach_generator import OutreachGenerator
+        from src.agents.referral_reporter import ReferralReporter
+
+        logger.info("=" * 60)
+        logger.info("[Auto Job] STARTING RECRUITER SCOUT & REFERRAL OUTREACH ENGINE")
+        logger.info("=" * 60)
+
+        scout = RecruiterScout()
+        generator = OutreachGenerator()
+        ref_reporter = ReferralReporter()
+
+        # Load applied jobs from reporter
+        applied_jobs = [j for j in self.reporter.applied_jobs if j.get("status") == "Applied"]
+        if not applied_jobs:
+            applied_jobs = self.reporter.applied_jobs[:max_companies]
+
+        seen_companies = set()
+        count = 0
+
+        for job in applied_jobs:
+            if count >= max_companies:
+                break
+            company = job.get("company", "").strip()
+            title = job.get("job_title", job.get("title", "Software Engineer"))
+            if not company or company.lower() in seen_companies:
+                continue
+
+            seen_companies.add(company.lower())
+            logger.info(f"[Outreach Engine] Finding recruiter / tech contacts at: {company} for '{title}'...")
+            contacts = scout.find_contacts(company, max_results=2)
+
+            for c in contacts:
+                logger.info(f"[Outreach Engine] Synthesizing pitch for {c['name']} ({c['role']}) at {company}...")
+                pitch = generator.generate_pitch(
+                    company=company,
+                    job_title=title,
+                    contact_name=c['name'],
+                    contact_role=c['role']
+                )
+                pitch["profile_url"] = c.get("profile_url", "")
+                ref_reporter.record_outreach(pitch)
+
+            count += 1
+
+        outreach_report = ref_reporter.generate_report()
+        logger.info("=" * 60)
+        logger.info(f"[SUCCESS] RECRUITER OUTREACH MATRIX GENERATED: {outreach_report}")
+        logger.info("=" * 60)
+        return outreach_report
 

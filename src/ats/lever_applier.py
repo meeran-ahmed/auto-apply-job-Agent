@@ -110,6 +110,22 @@ class LeverApplier:
                 self.driver.execute_script("arguments[0].click();", submit_btn[0])
                 logger.info("Clicked Lever Submit button!")
                 time.sleep(4)
+
+                after_url = self.driver.current_url.lower()
+                page_text = self.driver.find_element(By.TAG_NAME, "body").text.lower()
+                success_keywords = ["thank you for applying", "application submitted", "received your application", "thanks for applying"]
+
+                if any(kw in page_text for kw in success_keywords) or any(p in after_url for p in ["/thanks", "/confirmation", "/applied"]):
+                    logger.info("[Lever] VERIFIED SUCCESS: Application confirmation detected!")
+                    return True
+
+                has_captcha = bool(self.driver.find_elements(By.XPATH, "//iframe[contains(@src, 'recaptcha') or contains(@src, 'hcaptcha')]"))
+                if has_captcha:
+                    logger.warning("[Lever] Form blocked by Google reCAPTCHA / hCaptcha verification.")
+                    return False
+                elif "/apply" in after_url:
+                    logger.warning("[Lever] Form did not transition to confirmation page. Required fields or verification missing.")
+                    return False
                 return True
 
             logger.warning("No clickable Lever submit button found.")

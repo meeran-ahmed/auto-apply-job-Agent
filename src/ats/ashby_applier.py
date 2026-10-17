@@ -117,6 +117,22 @@ class AshbyApplier:
                         self.driver.execute_script("arguments[0].click();", btn)
                         logger.info("Clicked Ashby / Universal Submit button!")
                         time.sleep(4)
+
+                        after_url = self.driver.current_url.lower()
+                        page_text = self.driver.find_element(By.TAG_NAME, "body").text.lower()
+                        success_keywords = ["thank you for applying", "application submitted", "received your application", "thanks for applying"]
+
+                        if any(kw in page_text for kw in success_keywords) or any(p in after_url for p in ["/thanks", "/confirmation", "/applied"]):
+                            logger.info("[Ashby] VERIFIED SUCCESS: Application confirmation detected!")
+                            return True
+
+                        has_errors = bool(self.driver.find_elements(By.XPATH, "//*[contains(@class, 'error') or contains(text(), 'required')]"))
+                        if has_errors:
+                            logger.warning("[Ashby] Form blocked: required fields missing.")
+                            return False
+                        elif "/application" in after_url:
+                            logger.warning("[Ashby] Form did not transition to confirmation.")
+                            return False
                         return True
                 except Exception:
                     continue

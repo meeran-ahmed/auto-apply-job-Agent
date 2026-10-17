@@ -158,7 +158,37 @@ class GreenhouseApplier:
                         self.driver.execute_script("arguments[0].click();", btn)
                         logger.info("Clicked Greenhouse / Universal Submit button!")
                         time.sleep(4)
-                        return True
+
+                        # Strict Submission Verification
+                        after_url = self.driver.current_url.lower()
+                        page_text = self.driver.find_element(By.TAG_NAME, "body").text.lower()
+                        success_keywords = [
+                            "thank you for applying", "application submitted", 
+                            "received your application", "application has been submitted", 
+                            "thank you for your interest", "we have received your resume"
+                        ]
+
+                        if any(kw in page_text for kw in success_keywords) or any(p in after_url for p in ["/confirmation", "/thanks", "/applied", "/success"]):
+                            logger.info("[Greenhouse] VERIFIED SUCCESS: Application confirmation detected!")
+                            return True
+
+                        # Check for blocking factors
+                        has_turnstile = bool(self.driver.find_elements(By.XPATH, "//iframe[contains(@src, 'turnstile') or contains(@src, 'recaptcha') or contains(@src, 'hcaptcha')] | //div[contains(@class, 'turnstile')]"))
+                        has_errors = bool(self.driver.find_elements(By.XPATH, "//*[contains(@class, 'error') or contains(text(), 'required field') or contains(text(), 'Please fill out')]"))
+
+                        if has_turnstile:
+                            logger.warning("[Greenhouse] Form blocked by Cloudflare Turnstile / CAPTCHA anti-bot verification.")
+                            return False
+                        elif has_errors:
+                            logger.warning("[Greenhouse] Form blocked: unfulfilled mandatory company questions.")
+                            return False
+                        else:
+                            # If URL navigated away from job listing page
+                            if "/jobs/" not in after_url:
+                                logger.info("[Greenhouse] Navigated away from job page to confirmation.")
+                                return True
+                            logger.warning("[Greenhouse] Form did not transition to confirmation page. Submission unconfirmed.")
+                            return False
                 except Exception:
                     continue
 

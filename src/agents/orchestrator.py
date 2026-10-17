@@ -80,9 +80,11 @@ class SwarmOrchestrator:
                         logger.info(f"[Swarm Orchestrator] Skipping already applied job: {job.get('title')} at {job.get('company')}")
                         continue
 
-                    logger.info(f"[Swarm Orchestrator] Dispatching job {processed_count + 1}/{max_external_jobs}: {job.get('title')} at {job.get('company')}")
-                    ats_worker.process_job(job)
-                    processed_count += 1
+                    logger.info(f"[Swarm Orchestrator] Attempting job {processed_count + 1}/{max_external_jobs}: {job.get('title')} at {job.get('company')}")
+                    success = ats_worker.process_job(job)
+                    if success:
+                        processed_count += 1
+                        logger.info(f"[Swarm Orchestrator] Successfully confirmed application {processed_count}/{max_external_jobs}!")
                     time.sleep(2)
 
                 try:

@@ -5,16 +5,34 @@ from src.agents.orchestrator import SwarmOrchestrator
 
 
 @click.command()
-@click.option('--mode', default='swarm', type=click.Choice(['swarm', 'linkedin', 'excel', 'outreach', 'all']), help='Execution mode: swarm, linkedin, excel, outreach, or all')
+@click.option('--mode', default='universal', type=click.Choice(['universal', 'swarm', 'linkedin', 'excel', 'outreach', 'all']), help='Execution mode: universal (live Chrome multi-portal), swarm, linkedin, excel, outreach, or all')
+@click.option('--portal', default='all', type=str, help='Target portal in universal mode: all, naukri, indeed, cutshort, internshala, wellfound')
 @click.option('--file', default=None, type=str, help='Path to custom Excel (.xlsx, .xls) or CSV spreadsheet with job links')
-@click.option('--limit', default=50, type=int, help='Maximum applications or recruiter contacts to process in this run')
-def main(mode: str, file: str, limit: int):
+@click.option('--limit', default=10, type=int, help='Maximum applications or recruiter contacts to process in this run')
+@click.option('--port', default=9222, type=int, help='Chrome remote debugging port (default: 9222)')
+def main(mode: str, portal: str, file: str, limit: int, port: int):
     """
     Auto Job: Autonomous Multi-Agent Job Application & Referral Outreach Engine.
     Coordinates specialized worker agents across job portals, custom Excel sheets,
     ATS boards, recruiter discovery, and referral synthesis.
     """
     logger.info("Initializing Auto Job Multi-Agent Engine...")
+
+    if mode == 'universal':
+        from src.core.universal_swarm import UniversalSwarm
+        swarm = UniversalSwarm(port=port)
+        if portal == 'all':
+            report_file = swarm.run_swarm(limit_per_portal=limit)
+        else:
+            swarm.run_portal(portal_name=portal, limit=limit)
+            report_file = swarm.reporter.generate_report()
+
+        print("\n" + "=" * 70)
+        print(f"[SUCCESS] UNIVERSAL CHROME JOB SWARM COMPLETE!")
+        print(f"Full Executive Report: {report_file}")
+        print("=" * 70 + "\n")
+        return
+
     orchestrator = SwarmOrchestrator()
 
     if mode == 'outreach':

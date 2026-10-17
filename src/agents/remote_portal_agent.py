@@ -17,7 +17,11 @@ class RemotePortalAgent:
             "Frontend Developer", "React Developer",
             "Implementation Engineer", "Solutions Engineer", "Software Engineer"
         ]
-        default_blacklist = ["senior", "sr.", "sr ", "staff", "principal", "architect", "lead", "manager", "director", "head of", "vp", "onsite"]
+        default_blacklist = [
+            "senior", "sr.", "sr ", "staff", "principal", "architect", "lead", 
+            "manager", "director", "head of", "vp", "onsite", 
+            "intern", "internship", "co-op", "trainee", "student"
+        ]
         combined = set((blacklist or []) + default_blacklist)
         self.blacklist = [b.lower() for b in combined]
         self.max_days = max_days
@@ -131,7 +135,9 @@ class RemotePortalAgent:
         endpoints = [
             "https://jobicy.com/api/v2/remote-jobs?count=100&industry=engineering",
             "https://jobicy.com/api/v2/remote-jobs?count=100&industry=dev",
-            "https://jobicy.com/api/v2/remote-jobs?count=100&industry=tech"
+            "https://jobicy.com/api/v2/remote-jobs?count=100&industry=tech",
+            "https://jobicy.com/api/v2/remote-jobs?count=100&tag=startup",
+            "https://jobicy.com/api/v2/remote-jobs?count=100&tag=fullstack"
         ]
         for url in endpoints:
             try:

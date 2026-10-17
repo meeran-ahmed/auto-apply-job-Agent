@@ -164,30 +164,61 @@ class OmniSwarmGUI(ctk.CTk):
             row=0, column=0, padx=16, pady=12, sticky="w"
         )
 
-        self.mode_var = ctk.StringVar(value="excel")
+        self.mode_var = ctk.StringVar(value="universal")
         self.opt_mode = ctk.CTkOptionMenu(
             mode_frame,
-            values=["excel", "swarm", "outreach"],
+            values=["universal", "swarm", "excel", "outreach"],
             variable=self.mode_var,
             command=self._on_mode_change
         )
         self.opt_mode.grid(row=0, column=1, padx=12, pady=12, sticky="w")
 
-        # Custom File Picker
+        # Portal Selection (for Universal Mode)
+        self.lbl_portal = ctk.CTkLabel(mode_frame, text="Target Portal:", font=ctk.CTkFont(weight="bold"))
+        self.lbl_portal.grid(row=1, column=0, padx=16, pady=(0, 12), sticky="w")
+
+        self.portal_var = ctk.StringVar(value="all")
+        self.opt_portal = ctk.CTkOptionMenu(
+            mode_frame,
+            values=["all", "naukri", "indeed", "cutshort", "internshala", "wellfound"],
+            variable=self.portal_var
+        )
+        self.opt_portal.grid(row=1, column=1, padx=12, pady=(0, 12), sticky="w")
+
+        # Chrome Live Debugging Session Control
+        self.chrome_status_frame = ctk.CTkFrame(mode_frame, fg_color="transparent")
+        self.chrome_status_frame.grid(row=2, column=0, columnspan=3, padx=16, pady=(0, 12), sticky="ew")
+
+        self.btn_launch_chrome = ctk.CTkButton(
+            self.chrome_status_frame,
+            text="🌐 Launch Debug Chrome (Port 9222)",
+            fg_color="#3B8ED0", hover_color="#1F6AA5",
+            width=260, height=32,
+            command=self._launch_chrome_debugging
+        )
+        self.btn_launch_chrome.pack(side="left", padx=(0, 12))
+
+        self.lbl_chrome_status = ctk.CTkLabel(
+            self.chrome_status_frame,
+            text="Checking port 9222...",
+            font=ctk.CTkFont(size=12),
+            text_color="gray70"
+        )
+        self.lbl_chrome_status.pack(side="left")
+
+        # Custom File Picker (for Excel mode)
         self.lbl_file = ctk.CTkLabel(mode_frame, text="Spreadsheet File:")
-        self.lbl_file.grid(row=1, column=0, padx=16, pady=(0, 12), sticky="w")
-
         self.entry_file = ctk.CTkEntry(mode_frame, placeholder_text="Select jobs.xlsx or jobs.csv...")
-        self.entry_file.grid(row=1, column=1, padx=12, pady=(0, 12), sticky="ew")
-
         self.btn_browse = ctk.CTkButton(mode_frame, text="Browse...", width=90, command=self._browse_file)
-        self.btn_browse.grid(row=1, column=2, padx=(0, 16), pady=(0, 12))
 
         # Limit
-        ctk.CTkLabel(mode_frame, text="Batch Limit:").grid(row=2, column=0, padx=16, pady=(0, 12), sticky="w")
+        ctk.CTkLabel(mode_frame, text="Batch Limit:").grid(row=3, column=0, padx=16, pady=(0, 12), sticky="w")
         self.entry_limit = ctk.CTkEntry(mode_frame, width=90)
-        self.entry_limit.insert(0, "50")
-        self.entry_limit.grid(row=2, column=1, padx=12, pady=(0, 12), sticky="w")
+        self.entry_limit.insert(0, "10")
+        self.entry_limit.grid(row=3, column=1, padx=12, pady=(0, 12), sticky="w")
+
+        # Initial mode check & Chrome probe
+        self.after(500, self._check_chrome_status)
 
         # Action Buttons & Progress
         act_frame = ctk.CTkFrame(self.tab_dashboard, fg_color="transparent")
@@ -347,14 +378,56 @@ class OmniSwarmGUI(ctk.CTk):
             self.entry_key.configure(show="*")
 
     def _on_mode_change(self, choice: str):
-        if choice == "excel":
-            self.lbl_file.grid()
-            self.entry_file.grid()
-            self.btn_browse.grid()
-        else:
+        if choice == "universal":
+            self.lbl_portal.grid()
+            self.opt_portal.grid()
+            self.chrome_status_frame.grid()
             self.lbl_file.grid_remove()
             self.entry_file.grid_remove()
             self.btn_browse.grid_remove()
+            self._check_chrome_status()
+        elif choice == "excel":
+            self.lbl_portal.grid_remove()
+            self.opt_portal.grid_remove()
+            self.chrome_status_frame.grid_remove()
+            self.lbl_file.grid(row=2, column=0, padx=16, pady=(0, 12), sticky="w")
+            self.entry_file.grid(row=2, column=1, padx=12, pady=(0, 12), sticky="ew")
+            self.btn_browse.grid(row=2, column=2, padx=(0, 16), pady=(0, 12))
+        else:
+            self.lbl_portal.grid_remove()
+            self.opt_portal.grid_remove()
+            self.chrome_status_frame.grid_remove()
+            self.lbl_file.grid_remove()
+            self.entry_file.grid_remove()
+            self.btn_browse.grid_remove()
+
+    def _check_chrome_status(self):
+        def probe():
+            import requests
+            try:
+                resp = requests.get("http://127.0.0.1:9222/json/version", timeout=1.5)
+                if resp.status_code == 200:
+                    self.after(0, lambda: self.lbl_chrome_status.configure(
+                        text="🟢 Connected: Chrome Live Session (meeranahmed17@gmail.com)",
+                        text_color="#2EA043"
+                    ))
+                    return
+            except Exception:
+                pass
+            self.after(0, lambda: self.lbl_chrome_status.configure(
+                text="⚪ Chrome not running on port 9222 (Click button to launch)",
+                text_color="gray70"
+            ))
+        threading.Thread(target=probe, daemon=True).start()
+
+    def _launch_chrome_debugging(self):
+        bat_file = self.base_dir / "start_chrome_debugging.bat"
+        if bat_file.exists():
+            subprocess.Popen([str(bat_file)], shell=True)
+            self._log_console("🌐 Started Chrome with debugging port 9222...")
+            self.after(2000, self._check_chrome_status)
+        else:
+            messagebox.showerror("Error", "start_chrome_debugging.bat not found!")
 
     def _browse_file(self):
         file_path = filedialog.askopenfilename(
@@ -469,7 +542,10 @@ class OmniSwarmGUI(ctk.CTk):
         file_arg = self.entry_file.get().strip()
 
         cmd = [sys.executable, str(self.base_dir / "swarm_main.py"), "--mode", mode, "--limit", limit]
-        if mode == "excel" and file_arg:
+        if mode == "universal":
+            portal = self.portal_var.get().strip()
+            cmd.extend(["--portal", portal])
+        elif mode == "excel" and file_arg:
             cmd.extend(["--file", file_arg])
 
         self.is_running = True

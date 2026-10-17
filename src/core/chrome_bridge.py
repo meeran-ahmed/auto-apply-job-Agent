@@ -20,14 +20,14 @@ class ChromeBridge:
     def __init__(self, port: int = 9222):
         self.port = port
         self.debug_url = f"http://127.0.0.1:{self.port}"
-        self.user_data_dir = Path(os.environ.get("LOCALAPPDATA", "C:\\Users\\AI EDITION\\AppData\\Local")) / "Google" / "Chrome" / "User Data"
+        self.user_data_dir = Path(os.environ.get("LOCALAPPDATA", "C:\\Users\\AI EDITION\\AppData\\Local")) / "Google" / "Chrome" / "JobAgentData"
 
     def is_chrome_debugging_ready(self) -> bool:
         """
         Checks if Chrome is already accepting CDP connections on port 9222.
         """
         try:
-            resp = requests.get(f"{self.debug_url}/json/version", timeout=2)
+            resp = requests.get(f"{self.debug_url}/json/version", timeout=1.5)
             if resp.status_code == 200:
                 logger.info(f"[ChromeBridge] Live Chrome instance detected on port {self.port}!")
                 return True
@@ -39,38 +39,46 @@ class ChromeBridge:
         """
         Launches Chrome with remote debugging if not already running,
         then attaches Selenium directly to the live session.
+        If CDP fails, falls back gracefully to a stealth Chrome driver.
         """
         if not self.is_chrome_debugging_ready():
             logger.info(f"[ChromeBridge] Starting Chrome with debugging port {self.port}...")
             chrome_exec = self._find_chrome_executable()
-            if not chrome_exec:
-                raise RuntimeError("Google Chrome executable not found on system!")
+            if chrome_exec and chrome_exec.exists():
+                self.user_data_dir.mkdir(parents=True, exist_ok=True)
+                cmd = [
+                    str(chrome_exec),
+                    f"--remote-debugging-port={self.port}",
+                    f"--user-data-dir={str(self.user_data_dir)}",
+                    "--no-first-run",
+                    "--no-default-browser-check"
+                ]
+                subprocess.Popen(cmd)
+                
+                # Wait up to 6 seconds for CDP to become ready
+                for _ in range(6):
+                    if self.is_chrome_debugging_ready():
+                        break
+                    time.sleep(1)
 
-            cmd = [
-                str(chrome_exec),
-                f"--remote-debugging-port={self.port}",
-                f"--user-data-dir={str(self.user_data_dir)}",
-                "--no-first-run",
-                "--no-default-browser-check"
-            ]
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
-            # Wait up to 15 seconds for CDP to become ready
-            for _ in range(15):
-                if self.is_chrome_debugging_ready():
-                    break
-                time.sleep(1)
+        # Attempt CDP connection if port is ready
+        if self.is_chrome_debugging_ready():
+            try:
+                options = webdriver.ChromeOptions()
+                options.add_experimental_option("debuggerAddress", f"127.0.0.1:{self.port}")
+                service = ChromeService(ChromeDriverManager().install())
+                driver = webdriver.Chrome(service=service, options=options)
+                logger.info(f"[ChromeBridge] Successfully attached to live Chrome session! Current URL: {driver.current_url}")
+                return driver
+            except Exception as e:
+                logger.warning(f"[ChromeBridge] CDP attachment failed ({e}). Falling back to standalone stealth driver...")
 
-        if not self.is_chrome_debugging_ready():
-            logger.warning("[ChromeBridge] Could not verify port 9222. Attempting direct CDP connection...")
-
-        # Attach Selenium to the live debugging session
-        options = webdriver.ChromeOptions()
-        options.add_experimental_option("debuggerAddress", f"127.0.0.1:{self.port}")
-        
+        # Fallback: Launch dedicated standalone stealth Chrome driver
+        logger.info("[ChromeBridge] Initializing dedicated standalone Chrome driver with stealth profile...")
+        from src.utils import chrome_browser_options
+        options = chrome_browser_options(custom_profile_name="job_agent_stealth_profile")
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
-        logger.info(f"[ChromeBridge] Successfully attached to live Chrome session! Current URL: {driver.current_url}")
         return driver
 
     def _find_chrome_executable(self) -> Path:

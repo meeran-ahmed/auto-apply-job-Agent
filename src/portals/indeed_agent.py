@@ -21,7 +21,7 @@ class IndeedAgent:
     def search_and_apply(self, keyword: str = "Full Stack Developer", location: str = "Remote", max_jobs: int = 10) -> int:
         encoded_kw = urllib.parse.quote(keyword)
         encoded_loc = urllib.parse.quote(location)
-        search_url = f"https://www.indeed.com/jobs?q={encoded_kw}&l={encoded_loc}&fromage=3"
+        search_url = f"https://www.indeed.com/jobs?q={encoded_kw}&l={encoded_loc}&fromage=3&iafilter=1"
         logger.info(f"[IndeedAgent] Navigating to Indeed search: {search_url}")
 
         self.driver.get(search_url)
@@ -41,7 +41,9 @@ class IndeedAgent:
             except Exception:
                 continue
 
-        logger.info(f"[IndeedAgent] Filtered {len(links)} matching candidate roles.")
+        # Deduplicate links while maintaining order
+        links = list(dict.fromkeys(links))
+        logger.info(f"[IndeedAgent] Filtered {len(links)} matching candidate roles with Indeed Apply.")
         applied_count = 0
 
         for title, link in links:

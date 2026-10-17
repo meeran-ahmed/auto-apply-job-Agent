@@ -13,10 +13,10 @@ class GeminiAnswerer:
     salary expectations, tech stack familiarity, custom open text) grounded in candidate profile.
     """
 
-    def __init__(self, secrets_path: str = "data_folder/secrets.yaml", resume_path: str = "data_folder/plain_text_resume.yaml"):
+    def __init__(self, secrets_path: str = "data_folder/secrets.yaml", resume_path: str = "data_folder/plain_text_resume.yaml", api_key: str = None):
         self.secrets_path = Path(secrets_path)
         self.resume_path = Path(resume_path)
-        self.api_key = self._load_api_key()
+        self.api_key = api_key or self._load_api_key()
         self.profile = self._load_profile()
         self.model = None
 

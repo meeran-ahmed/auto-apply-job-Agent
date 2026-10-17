@@ -47,23 +47,44 @@ class NaukriAgent:
         for title, link in links:
             if applied_count >= max_jobs:
                 break
+            if self.reporter and self.reporter.is_already_applied(link, title):
+                logger.info(f"[NaukriAgent] Already applied to '{title}', skipping...")
+                continue
             try:
-                success = self.apply_to_job(title, link)
+                success, company = self.apply_to_job(title, link)
                 if success:
                     applied_count += 1
-                    logger.info(f"[NaukriAgent] Successfully applied to '{title}' on Naukri ({applied_count}/{max_jobs})")
+                    logger.info(f"[NaukriAgent] Successfully applied to '{title}' at '{company}' on Naukri ({applied_count}/{max_jobs})")
                     if self.reporter:
-                        self.reporter.record_applied(title, "Naukri Hiring Company", "Naukri.com", link)
+                        self.reporter.record_applied(title, company, "Naukri.com", link)
                 StealthDriver.random_sleep(3.0, 6.0)
             except Exception as e:
                 logger.error(f"[NaukriAgent] Error applying to {title}: {e}")
 
         return applied_count
 
-    def apply_to_job(self, title: str, link: str) -> bool:
+    def apply_to_job(self, title: str, link: str):
         logger.info(f"[NaukriAgent] Opening job: {title} -> {link}")
         self.driver.get(link)
         StealthDriver.random_sleep(2.5, 4.0)
+
+        # Extract company name
+        company = "Naukri Hiring Company"
+        comp_elems = self.driver.find_elements(By.CSS_SELECTOR, "a.comp-name, div.company-name, a[href*='cmp/'], a.top-company-name, div.jd-top-head")
+        for ce in comp_elems:
+            txt = ce.text.strip().split("\n")[0]
+            if txt and txt.lower() not in ["to", "years", "reviews", "hiring company", "full stack developer"]:
+                company = txt
+                break
+
+        if company == "Naukri Hiring Company" and "job-listings-" in link:
+            slug = link.split("job-listings-")[-1].split("?")[0]
+            tokens = slug.split("-")
+            for i, tok in enumerate(tokens):
+                if tok in ["chennai", "bengaluru", "bangalore", "noida", "mumbai", "hyderabad", "pune", "delhi", "remote", "mohali", "nashik", "gurgaon"]:
+                    if i > 0 and tokens[i-1].lower() != "developer":
+                        company = tokens[i-1].capitalize()
+                    break
 
         # Look for 1-click apply button
         apply_buttons = self.driver.find_elements(
@@ -74,7 +95,7 @@ class NaukriAgent:
 
         if not apply_buttons:
             logger.warning(f"[NaukriAgent] No apply button found for '{title}' (already applied or closed).")
-            return False
+            return False, company
 
         btn = apply_buttons[0]
         StealthDriver.human_click(self.driver, btn)
@@ -83,10 +104,7 @@ class NaukriAgent:
         # Handle post-click chat or multi-step questions
         self._handle_screening_questions(title)
 
-        if LoopGuard.verify_success(self.driver) or "already applied" in self.driver.page_source.lower() or "application sent" in self.driver.page_source.lower():
-            return True
-
-        return True
+        return True, company
 
     def _handle_screening_questions(self, job_title: str):
         text_inputs = self.driver.find_elements(By.XPATH, "//input[@type='text' and not(@value)] | //textarea[not(text())]")

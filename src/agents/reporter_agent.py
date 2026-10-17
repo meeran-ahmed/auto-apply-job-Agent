@@ -37,7 +37,7 @@ class ReporterAgent:
             for j in self.applied_jobs:
                 if url and j.get("link") == url:
                     return True
-                if company and title and j.get("company", "").strip().lower() == company.strip().lower() and j.get("title", "").strip().lower() == title.strip().lower():
+                if company and title and company not in ["Naukri Hiring Company", "Hiring Company", "Cutshort Startup", "Wellfound Startup", "To"] and j.get("company", "").strip().lower() == company.strip().lower() and j.get("title", "").strip().lower() == title.strip().lower():
                     return True
             return False
 
@@ -52,8 +52,14 @@ class ReporterAgent:
                 "status": "Applied",
                 "notes": notes
             }
-            # Check for duplicate
-            if not any(j.get("link") == url or (j.get("company") == company and j.get("title") == title) for j in self.applied_jobs):
+            # Check for duplicate: match link
+            is_dup = False
+            for j in self.applied_jobs:
+                if url and j.get("link") == url:
+                    is_dup = True
+                    break
+
+            if not is_dup:
                 self.applied_jobs.append(record)
                 self._save_json()
                 logger.info(f"[{platform}] Logged successful application: '{title}' at '{company}'")

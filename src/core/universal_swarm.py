@@ -20,7 +20,7 @@ class UniversalSwarm:
     with zero login walls, intelligent Gemini question-answering, and verified submissions.
     """
 
-    AVAILABLE_PORTALS = ["naukri", "indeed", "cutshort", "internshala", "wellfound"]
+    AVAILABLE_PORTALS = ["naukri", "indeed", "cutshort", "internshala", "wellfound", "linkedin"]
 
     def __init__(self, port: int = 9222, gemini_api_key: str = None):
         self.port = port
@@ -76,6 +76,11 @@ class UniversalSwarm:
 
         elif portal_name in ["wellfound", "angellist"]:
             agent = WellfoundAgent(driver=driver, gemini_answerer=self.answerer, reporter=self.reporter)
+            return agent.search_and_apply(keyword=keyword, max_jobs=limit)
+
+        elif portal_name == "linkedin":
+            from src.portals.linkedin_agent import LinkedInAgent
+            agent = LinkedInAgent(driver=driver, gemini_answerer=self.answerer, reporter=self.reporter)
             return agent.search_and_apply(keyword=keyword, max_jobs=limit)
 
         else:

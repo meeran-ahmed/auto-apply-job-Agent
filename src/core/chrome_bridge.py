@@ -39,27 +39,28 @@ class ChromeBridge:
         """
         Launches Chrome with remote debugging if not already running,
         then attaches Selenium directly to the live session.
-        If CDP fails, falls back gracefully to a stealth Chrome driver.
         """
         if not self.is_chrome_debugging_ready():
             logger.info(f"[ChromeBridge] Starting Chrome with debugging port {self.port}...")
             chrome_exec = self._find_chrome_executable()
-            if chrome_exec and chrome_exec.exists():
-                self.user_data_dir.mkdir(parents=True, exist_ok=True)
-                cmd = [
-                    str(chrome_exec),
-                    f"--remote-debugging-port={self.port}",
-                    f"--user-data-dir={str(self.user_data_dir)}",
-                    "--no-first-run",
-                    "--no-default-browser-check"
-                ]
-                subprocess.Popen(cmd)
-                
-                # Wait up to 6 seconds for CDP to become ready
-                for _ in range(6):
-                    if self.is_chrome_debugging_ready():
-                        break
-                    time.sleep(1)
+            if not chrome_exec or not chrome_exec.exists():
+                raise RuntimeError("Google Chrome executable not found on system!")
+
+            self.user_data_dir.mkdir(parents=True, exist_ok=True)
+            cmd = [
+                str(chrome_exec),
+                f"--remote-debugging-port={self.port}",
+                f"--user-data-dir={str(self.user_data_dir)}",
+                "--no-first-run",
+                "--no-default-browser-check"
+            ]
+            subprocess.Popen(cmd)
+            
+            # Wait up to 8 seconds for CDP to become ready
+            for _ in range(8):
+                if self.is_chrome_debugging_ready():
+                    break
+                time.sleep(1)
 
         # Attempt CDP connection if port is ready
         if self.is_chrome_debugging_ready():

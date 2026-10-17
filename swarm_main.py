@@ -6,7 +6,7 @@ from src.agents.orchestrator import SwarmOrchestrator
 
 @click.command()
 @click.option('--mode', default='universal', type=click.Choice(['universal', 'swarm', 'linkedin', 'excel', 'outreach', 'all']), help='Execution mode: universal (live Chrome multi-portal), swarm, linkedin, excel, outreach, or all')
-@click.option('--portal', default='all', type=str, help='Target portal in universal mode: all, naukri, indeed, cutshort, internshala, wellfound')
+@click.option('--portal', default='all', type=str, help='Target portal in universal mode: all, linkedin, naukri, indeed, cutshort, internshala, wellfound')
 @click.option('--file', default=None, type=str, help='Path to custom Excel (.xlsx, .xls) or CSV spreadsheet with job links')
 @click.option('--limit', default=10, type=int, help='Maximum applications or recruiter contacts to process in this run')
 @click.option('--port', default=9222, type=int, help='Chrome remote debugging port (default: 9222)')

@@ -180,7 +180,7 @@ class OmniSwarmGUI(ctk.CTk):
         self.portal_var = ctk.StringVar(value="all")
         self.opt_portal = ctk.CTkOptionMenu(
             mode_frame,
-            values=["all", "naukri", "indeed", "cutshort", "internshala", "wellfound"],
+            values=["all", "linkedin", "naukri", "indeed", "cutshort", "internshala", "wellfound"],
             variable=self.portal_var
         )
         self.opt_portal.grid(row=1, column=1, padx=12, pady=(0, 12), sticky="w")

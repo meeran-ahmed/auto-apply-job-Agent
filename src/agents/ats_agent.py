@@ -28,33 +28,39 @@ class ATSAgent:
             self.driver.get(url)
             time.sleep(3)
 
-            # Check if there is an intermediary "Apply" button or link
-            try:
-                apply_elements = self.driver.find_elements(
-                    "xpath",
-                    "//a[contains(@href, 'greenhouse') or contains(@href, 'lever') or contains(@href, 'ashby') or contains(@href, 'workday') or contains(@href, 'smartrecruiters') or contains(@href, 'recruitee') or contains(@href, 'workable') or contains(@href, 'bamboohr') or contains(@href, 'rippling') or contains(@href, 'external')] | "
-                    "//a[contains(translate(., 'APPLY', 'apply'), 'apply') and not(contains(@href, 'mailto:')) and not(contains(@href, '#')) and not(contains(@href, 'ai-copilot'))] | "
-                    "//button[contains(translate(., 'APPLY', 'apply'), 'apply')] | "
-                    "//a[contains(@class, 'apply') or contains(@id, 'apply')]"
-                )
-                if apply_elements:
-                    btn = apply_elements[0]
-                    dest_href = btn.get_attribute("href")
-                    if dest_href and dest_href.startswith("http") and not any(board in dest_href for board in ["remoterocketship.com/company", "remoterocketship.com/jobs", "jobicy.com/jobs"]):
-                        logger.info(f"[ATSAgent] Navigating directly to external ATS link: {dest_href}")
-                        self.driver.get(dest_href)
-                        time.sleep(3.5)
-                    else:
-                        self.driver.execute_script("arguments[0].scrollIntoView(true);", btn)
-                        time.sleep(1)
-                        self.driver.execute_script("arguments[0].click();", btn)
-                        time.sleep(3.5)
-                    
-                    if len(self.driver.window_handles) > 1:
-                        self.driver.switch_to.window(self.driver.window_handles[-1])
-                        logger.info(f"[ATSAgent] Switched to new window handle: {self.driver.current_url}")
-            except Exception as e:
-                logger.debug(f"Intermediary apply link error: {e}")
+            # Check if this is an external job board with an intermediary "Apply" button
+            current_target = self.driver.current_url.lower()
+            is_direct_ats = any(k in current_target for k in ["/jobs/", "job-boards.greenhouse.io", "boards.greenhouse.io", "jobs.lever.co", "jobs.ashbyhq.com", "myworkdayjobs.com", "smartrecruiters.com"]) and not any(portal in current_target for portal in ["jobicy.com", "weworkremotely.com", "arbeitnow.com", "himalayas.app", "remoteok.com"])
+
+            if not is_direct_ats:
+                try:
+                    apply_elements = self.driver.find_elements(
+                        "xpath",
+                        "//a[contains(@href, 'greenhouse') or contains(@href, 'lever') or contains(@href, 'ashby') or contains(@href, 'workday') or contains(@href, 'smartrecruiters') or contains(@href, 'recruitee') or contains(@href, 'workable') or contains(@href, 'bamboohr') or contains(@href, 'rippling') or contains(@href, 'external')] | "
+                        "//a[contains(translate(., 'APPLY', 'apply'), 'apply') and not(contains(@href, 'mailto:')) and not(contains(@href, '#')) and not(contains(@href, 'ai-copilot'))] | "
+                        "//button[contains(translate(., 'APPLY', 'apply'), 'apply')] | "
+                        "//a[contains(@class, 'apply') or contains(@id, 'apply')]"
+                    )
+                    if apply_elements:
+                        for btn in apply_elements:
+                            dest_href = btn.get_attribute("href")
+                            if dest_href and dest_href.startswith("http") and not any(board in dest_href for board in ["remoterocketship.com", "jobicy.com/jobs", "weworkremotely.com/categories"]):
+                                logger.info(f"[ATSAgent] Navigating directly to external ATS link: {dest_href}")
+                                self.driver.get(dest_href)
+                                time.sleep(3.5)
+                                break
+                            else:
+                                self.driver.execute_script("arguments[0].scrollIntoView(true);", btn)
+                                time.sleep(1)
+                                self.driver.execute_script("arguments[0].click();", btn)
+                                time.sleep(3.5)
+                                break
+                        
+                        if len(self.driver.window_handles) > 1:
+                            self.driver.switch_to.window(self.driver.window_handles[-1])
+                            logger.info(f"[ATSAgent] Switched to new window handle: {self.driver.current_url}")
+                except Exception as e:
+                    logger.debug(f"Intermediary apply link error: {e}")
 
             success = self.ats_manager.apply_to_external_page(title, company)
             if success:

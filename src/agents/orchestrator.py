@@ -49,10 +49,11 @@ class SwarmOrchestrator:
         logger.info("[Agent: Discovery] Scanning global remote tech job feeds...")
         discovery_agent = RemotePortalAgent(
             target_positions=self.config.get("positions", []),
-            blacklist=self.config.get("titleBlacklist", [])
+            blacklist=self.config.get("titleBlacklist", []),
+            max_days=3
         )
         discovered_jobs = discovery_agent.fetch_all_jobs()
-        logger.info(f"[Agent: Discovery] Found {len(discovered_jobs)} matching engineering positions.")
+        logger.info(f"[Agent: Discovery] Found {len(discovered_jobs)} matching engineering positions (posted in past 3 days).")
 
         # 2. Agent: Parallel ATS Worker
         if discovered_jobs:

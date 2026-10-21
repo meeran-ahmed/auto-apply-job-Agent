@@ -5,13 +5,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from src.core.stealth_driver import StealthDriver
 from src.core.loop_guard import LoopGuard
+from src.core.fit_evaluator import FitEvaluator
+from src.core.reticle_verifier import ReticleVerifier
+from src.agents.drafter_reviewer import DrafterReviewerEngine
 
 
 class LinkedInAgent:
     """
-    Automates job applications on LinkedIn using the user's active session.
-    Applies specifically to remote full-stack/python/frontend engineering positions (NO INTERNSHIPS),
-    handling Easy Apply modals with Gemini 1.5 Flash grounded in candidate profile.
+    Next-Level LinkedIn Autonomous Application Agent.
+    - Evaluates 100-point vacancy fit (Zero internships, zero seniors).
+    - Uses Drafter-Reviewer two-agent engine for question answering.
+    - Employs ReticleVerifier for strict inside-out terminal submission verification.
     """
 
     def __init__(self, driver, gemini_answerer=None, reporter=None):
@@ -19,18 +23,19 @@ class LinkedInAgent:
         self.gemini_answerer = gemini_answerer
         self.reporter = reporter
         self.loop_guard = LoopGuard()
+        self.fit_evaluator = FitEvaluator()
+        self.drafter_reviewer = DrafterReviewerEngine(gemini_answerer=gemini_answerer)
+        self.reticle_verifier = ReticleVerifier()
 
     def search_and_apply(self, keyword: str = "Full Stack Developer", location: str = "Remote", max_jobs: int = 5) -> int:
         encoded_kw = urllib.parse.quote(keyword)
         encoded_loc = urllib.parse.quote(location)
-        # Target remote full-stack developer jobs posted recently with Easy Apply
         search_url = f"https://www.linkedin.com/jobs/search/?keywords={encoded_kw}&location={encoded_loc}&f_AL=true&f_WT=2&sortBy=DD"
         logger.info(f"[LinkedInAgent] Navigating to LinkedIn Remote Easy Apply search: {search_url}")
 
         self.driver.get(search_url)
         StealthDriver.random_sleep(4.0, 6.0)
 
-        # Collect all job view links on page
         job_links = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/jobs/view/')]")
         logger.info(f"[LinkedInAgent] Found {len(job_links)} job links on page.")
 
@@ -43,28 +48,24 @@ class LinkedInAgent:
                 clean_href = href.split("?")[0]
                 title = a.text.strip().replace("\n", " ")
 
-                # Extract title from link or slug if text is blank
-                if not title or len(title) < 3:
-                    slug = clean_href.split("/jobs/view/")[-1]
-                    title = slug.replace("-at-", " @ ").split("-")[0].replace("-", " ").title()
+                if not title:
+                    slug = clean_href.split("/view/")[-1]
+                    title = slug.replace("-", " ").title()
 
-                if clean_href and self._is_target_role(title):
-                    candidates.append((title, clean_href))
-            except Exception:
-                continue
+                # Evaluate fit using 100-Point FitEvaluator
+                score, is_fit, details = self.fit_evaluator.evaluate_fit(title, description="", location=location)
+                if not is_fit:
+                    continue
 
-        # Deduplicate by URL
-        seen_urls = set()
-        unique_candidates = []
-        for t, h in candidates:
-            if h not in seen_urls:
-                seen_urls.add(h)
-                unique_candidates.append((t, h))
+                if clean_href not in [c[0] for c in candidates]:
+                    candidates.append((clean_href, title, score))
+            except Exception as e:
+                logger.debug(f"[LinkedInAgent] Error parsing job link: {e}")
 
-        logger.info(f"[LinkedInAgent] Filtered {len(unique_candidates)} verified target developer positions (no internships/seniors).")
+        logger.info(f"[LinkedInAgent] Filtered {len(candidates)} verified target developer positions (Fit Score >= 75, no internships).")
 
         applied_count = 0
-        for title, link in unique_candidates:
+        for link, title, fit_score in candidates:
             if applied_count >= max_jobs:
                 break
 
@@ -73,12 +74,14 @@ class LinkedInAgent:
                 continue
 
             try:
-                success, company = self.apply_to_job(title, link)
-                if success:
+                verified, company, reason = self.apply_to_job(title, link)
+                if verified:
                     applied_count += 1
-                    logger.info(f"[LinkedInAgent] Successfully applied to '{title}' at '{company}' on LinkedIn ({applied_count}/{max_jobs})")
+                    logger.info(f"[LinkedInAgent] [VERIFIED SUBMISSION] Applied to '{title}' at '{company}' ({applied_count}/{max_jobs})")
                     if self.reporter:
                         self.reporter.record_applied(title, company, "LinkedIn", link)
+                else:
+                    logger.warning(f"[LinkedInAgent] [BLOCKED/UNVERIFIED] Could not verify terminal submission for '{title}' at '{company}' (Reason: {reason})")
                 StealthDriver.random_sleep(4.0, 6.0)
             except Exception as e:
                 logger.error(f"[LinkedInAgent] Error applying to '{title}': {e}")
@@ -106,44 +109,49 @@ class LinkedInAgent:
         # Find Apply / Easy Apply button
         apply_buttons = self.driver.find_elements(
             By.XPATH,
-            "//button[contains(@class, 'apply-button') or contains(., 'Apply') or contains(., 'Easy Apply')] | "
-            "//a[contains(@class, 'apply-button') or contains(., 'Apply')]"
+            "//button[contains(@class, 'apply-button') or contains(., 'Easy Apply') or contains(., 'Apply')] | "
+            "//a[contains(@class, 'apply-button') or contains(., 'Easy Apply') or contains(., 'Apply')]"
         )
 
         if not apply_buttons:
             logger.info(f"[LinkedInAgent] No active apply button found for '{title}' (may be closed or applied).")
-            return False, company
+            return False, company, "No apply button found"
 
         btn = apply_buttons[0]
         StealthDriver.human_click(self.driver, btn)
         StealthDriver.random_sleep(2.5, 4.0)
 
-        # Check if opened in a new tab (external ATS redirect)
+        # Handle external ATS redirect tabs: DO NOT fake-log success!
         if len(self.driver.window_handles) > 1:
             self.driver.switch_to.window(self.driver.window_handles[-1])
             StealthDriver.random_sleep(2.0, 3.5)
-            # Record external application click
-            logger.info(f"[LinkedInAgent] Followed direct application link to: {self.driver.current_url}")
+            external_url = self.driver.current_url
+            logger.info(f"[LinkedInAgent] External career site redirect detected: {external_url}")
+            # Close external tab and return False so it is not fake-logged
             self.driver.close()
             self.driver.switch_to.window(self.driver.window_handles[0])
-            return True, company
+            return False, company, f"Redirected to external ATS portal ({external_url})"
 
-        # Process multi-step Easy Apply modal if present
+        # Process multi-step Easy Apply modal
         steps = 0
-        while steps < 10:
+        while steps < 12:
             steps += 1
 
-            if self._check_success():
-                return True, company
+            # Reticle verification check at each step
+            is_done, verdict, details = self.reticle_verifier.verify_terminal_submission(self.driver, company, title)
+            if is_done:
+                return True, company, "Terminal confirmation confirmed"
 
-            self._fill_modal_fields(title)
+            self._fill_modal_fields(title, company)
 
             # Check for Submit application
             submit_btn = self.driver.find_elements(By.XPATH, "//button[contains(., 'Submit application') or contains(., 'Submit')]")
             if submit_btn and submit_btn[0].is_displayed():
                 StealthDriver.human_click(self.driver, submit_btn[0])
-                StealthDriver.random_sleep(3.0, 4.5)
-                return True, company
+                StealthDriver.random_sleep(3.5, 5.0)
+                # Final Reticle verification after submit click
+                is_done, verdict, details = self.reticle_verifier.verify_terminal_submission(self.driver, company, title)
+                return is_done, company, details.get("reason", verdict)
 
             # Check for Review
             review_btn = self.driver.find_elements(By.XPATH, "//button[contains(., 'Review')]")
@@ -159,18 +167,21 @@ class LinkedInAgent:
                 StealthDriver.random_sleep(2.0, 3.0)
                 continue
 
+            # If no progression button is displayed, stop loop
             break
 
-        return True, company
+        # Final verification check before declaring outcome
+        is_done, verdict, details = self.reticle_verifier.verify_terminal_submission(self.driver, company, title)
+        return is_done, company, details.get("reason", "Incomplete Easy Apply modal steps")
 
-    def _fill_modal_fields(self, job_title: str):
-        """Fills visible text inputs, textareas, and radio buttons in Easy Apply modal."""
+    def _fill_modal_fields(self, job_title: str, company: str):
+        """Fills visible text inputs, textareas, and radio buttons using DrafterReviewer."""
         try:
             inputs = self.driver.find_elements(By.CSS_SELECTOR, "div[class*='modal'] input[type='text'], div[class*='modal'] textarea")
             for inp in inputs:
                 if inp.is_displayed() and not inp.get_attribute("value"):
-                    label = inp.get_attribute("placeholder") or "Experience"
-                    answer = self.gemini_answerer.answer_question(label, job_title=job_title) if self.gemini_answerer else "3"
+                    label = inp.get_attribute("aria-label") or inp.get_attribute("placeholder") or "Experience"
+                    answer = self.drafter_reviewer.generate_verified_answer(label, job_title, company)
                     StealthDriver.human_type(inp, answer)
                     time.sleep(0.3)
 
@@ -181,18 +192,3 @@ class LinkedInAgent:
                     StealthDriver.human_click(self.driver, r)
         except Exception as e:
             logger.debug(f"[LinkedInAgent] Modal field note: {e}")
-
-    def _check_success(self) -> bool:
-        try:
-            page_src = self.driver.page_source.lower()
-            return "application submitted" in page_src or "your application was sent" in page_src
-        except Exception:
-            return False
-
-    def _is_target_role(self, title: str) -> bool:
-        t = title.lower()
-        blacklist = ["intern", "internship", "co-op", "trainee", "student", "senior", "lead", "architect", "director", "manager", "head", "vp", "staff", "principal"]
-        if any(b in t for b in blacklist):
-            return False
-        keywords = ["developer", "engineer", "full stack", "frontend", "python", "react", "web", "software", "backend"]
-        return any(k in t for k in keywords)

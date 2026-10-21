@@ -10,17 +10,22 @@ from src.portals.indeed_agent import IndeedAgent
 from src.portals.cutshort_agent import CutshortAgent
 from src.portals.internshala_jobs_agent import InternshalaJobsAgent
 from src.portals.wellfound_agent import WellfoundAgent
+from src.portals.freehire_harvester import FreehireHarvester
+from src.core.resume_tailor import ResumeTailor
+from src.core.fit_evaluator import FitEvaluator
+from src.agents.ats_agent import ATSAgent
 
 
 class UniversalSwarm:
     """
-    Universal Swarm Orchestrator.
-    Connects directly to the user's live Chrome browser session (meeranahmed17@gmail.com)
-    on port 9222 and dispatches specialized worker agents across all major portals
-    with zero login walls, intelligent Gemini question-answering, and verified submissions.
+    OmniSwarm 2.0 Orchestrator.
+    Connects to the user's live Chrome browser session on port 9222 and dispatches
+    high-conviction worker agents across Freehire/Direct ATS, LinkedIn, Naukri, Indeed,
+    Cutshort, and Wellfound with zero login walls, intelligent Drafter-Reviewer Q&A,
+    dynamic resume tailoring, and Reticle submission verification.
     """
 
-    AVAILABLE_PORTALS = ["naukri", "indeed", "cutshort", "internshala", "wellfound", "linkedin"]
+    AVAILABLE_PORTALS = ["freehire", "linkedin", "naukri", "indeed", "cutshort", "internshala", "wellfound"]
 
     def __init__(self, port: int = 9222, gemini_api_key: str = None):
         self.port = port
@@ -28,6 +33,8 @@ class UniversalSwarm:
         self.reporter = ReporterAgent()
         self.gemini_key = gemini_api_key or self._resolve_gemini_key()
         self.answerer = GeminiAnswerer(api_key=self.gemini_key)
+        self.fit_evaluator = FitEvaluator()
+        self.resume_tailor = ResumeTailor()
         self.driver = None
 
     def _resolve_gemini_key(self) -> str:
@@ -51,14 +58,51 @@ class UniversalSwarm:
             self.driver = self.bridge.launch_or_attach()
         return self.driver
 
-    def run_portal(self, portal_name: str, keyword: str = "Full Stack Developer", limit: int = 10) -> int:
+    def run_portal(self, portal_name: str, keyword: str = "Full Stack Developer", limit: int = 5) -> int:
         """Runs a single portal worker agent."""
         portal_name = portal_name.lower().strip()
         driver = self.connect()
 
         logger.info(f"[UniversalSwarm] Dispatching agent for portal: '{portal_name.upper()}' (Target: {limit} jobs)")
 
-        if portal_name == "naukri":
+        if portal_name in ["freehire", "direct_ats"]:
+            harvester = FreehireHarvester(fit_evaluator=self.fit_evaluator)
+            verified_jobs = harvester.fetch_live_direct_jobs(max_results=limit * 2)
+            
+            profile_data = self.fit_evaluator.candidate_profile
+            ats_worker = ATSAgent(
+                driver=driver,
+                resume_path="data_folder/resume.pdf",
+                profile_data=profile_data,
+                gpt_answerer=self.answerer,
+                reporter=self.reporter
+            )
+            
+            applied = 0
+            for job in verified_jobs:
+                if applied >= limit:
+                    break
+                if self.reporter.is_already_applied(job.get("url"), job.get("title")):
+                    continue
+                
+                # Dynamic tailoring
+                self.resume_tailor.generate_tailored_application_package(
+                    job_title=job.get("title", ""),
+                    company=job.get("company", ""),
+                    job_description=job.get("description", "")
+                )
+                
+                success = ats_worker.process_job(job)
+                if success:
+                    applied += 1
+            return applied
+
+        elif portal_name == "linkedin":
+            from src.portals.linkedin_agent import LinkedInAgent
+            agent = LinkedInAgent(driver=driver, gemini_answerer=self.answerer, reporter=self.reporter)
+            return agent.search_and_apply(keyword=keyword, max_jobs=limit)
+
+        elif portal_name == "naukri":
             agent = NaukriAgent(driver=driver, gemini_answerer=self.answerer, reporter=self.reporter)
             return agent.search_and_apply(keyword=keyword, max_jobs=limit)
 
@@ -78,11 +122,6 @@ class UniversalSwarm:
             agent = WellfoundAgent(driver=driver, gemini_answerer=self.answerer, reporter=self.reporter)
             return agent.search_and_apply(keyword=keyword, max_jobs=limit)
 
-        elif portal_name == "linkedin":
-            from src.portals.linkedin_agent import LinkedInAgent
-            agent = LinkedInAgent(driver=driver, gemini_answerer=self.answerer, reporter=self.reporter)
-            return agent.search_and_apply(keyword=keyword, max_jobs=limit)
-
         else:
             logger.error(f"[UniversalSwarm] Unknown or unconfigured portal: '{portal_name}'. Available: {self.AVAILABLE_PORTALS}")
             return 0
@@ -91,9 +130,9 @@ class UniversalSwarm:
         """
         Executes multi-portal swarm across selected or all platforms sequentially.
         """
-        target_portals = portals or self.AVAILABLE_PORTALS
+        target_portals = portals or ["freehire", "linkedin", "naukri"]
         logger.info("=" * 60)
-        logger.info(f"[UNIVERSAL SWARM] Commencing across portals: {', '.join(target_portals).upper()}")
+        logger.info(f"[OMNISWARM 2.0] Commencing across portals: {', '.join(target_portals).upper()}")
         logger.info("=" * 60)
 
         total_applied = 0

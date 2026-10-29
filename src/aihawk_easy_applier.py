@@ -30,8 +30,9 @@ class AIHawkEasyApplier:
         logger.debug("Initializing AIHawkEasyApplier")
         self.driver = driver
         if resume_dir:
+            import os
             p = Path(resume_dir).resolve()
-            self.resume_path = p if p.exists() else None
+            self.resume_path = str(resume_dir) if os.path.exists(str(resume_dir)) else (p if p.exists() else None)
         else:
             self.resume_path = None
         self.set_old_answers = set_old_answers

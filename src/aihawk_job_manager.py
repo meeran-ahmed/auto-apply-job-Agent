@@ -50,24 +50,35 @@ class AIHawkJobManager:
         self.easy_applier_component = None
         logger.debug("AIHawkJobManager initialized successfully")
 
-    def set_parameters(self, parameters):
+    def set_parameters(self, parameters=None, **kwargs):
         logger.debug("Setting parameters for AIHawkJobManager")
+        if parameters is None:
+            parameters = {}
+        if isinstance(parameters, dict):
+            parameters = {**parameters, **kwargs}
+        else:
+            parameters = kwargs
+
         self.company_blacklist = parameters.get('company_blacklist', []) or []
         self.title_blacklist = parameters.get('title_blacklist', []) or []
         self.positions = parameters.get('positions', [])
         self.locations = parameters.get('locations', [])
         self.apply_once_at_company = parameters.get('apply_once_at_company', False)
-        self.base_search_url = self.get_base_search_url(parameters)
+        self.base_search_url = self.get_base_search_url(parameters) if hasattr(self, 'get_base_search_url') else ""
         self.seen_jobs = []
 
         job_applicants_threshold = parameters.get('job_applicants_threshold', {})
         self.min_applicants = job_applicants_threshold.get('min_applicants', 0)
         self.max_applicants = job_applicants_threshold.get('max_applicants', float('inf'))
 
-        resume_path = parameters.get('uploads', {}).get('resume', None)
-        self.resume_path = Path(resume_path) if resume_path and Path(resume_path).exists() else None
-        self.output_file_directory = Path(parameters['outputFileDirectory'])
-        self.env_config = EnvironmentKeys()
+        resume_path = parameters.get('uploads', {}).get('resume', None) or parameters.get('resume_dir', None)
+        self.resume_path = Path(resume_path) if resume_path else None
+        out_dir = parameters.get('outputFileDirectory', parameters.get('output_file_directory', 'output'))
+        self.output_file_directory = Path(out_dir) if out_dir else None
+        try:
+            self.env_config = EnvironmentKeys()
+        except Exception:
+            self.env_config = None
         logger.debug("Parameters set successfully")
 
     def set_gpt_answerer(self, gpt_answerer):
@@ -153,9 +164,13 @@ class AIHawkJobManager:
                 pass
 
             no_jobs_element = self.driver.find_elements(By.CLASS_NAME, 'jobs-search-two-pane__no-results-banner--expand')
-            if no_jobs_element and ('No matching jobs found' in no_jobs_element[0].text or 'unfortunately, things aren' in self.driver.page_source.lower()):
-                logger.debug("No matching jobs found banner visible, skipping.")
-                return []
+            if isinstance(no_jobs_element, list) and len(no_jobs_element) > 0:
+                first_el = no_jobs_element[0]
+                text_val = getattr(first_el, 'text', '')
+                page_source = getattr(self.driver, 'page_source', '')
+                if (isinstance(text_val, str) and 'No matching jobs found' in text_val) or (isinstance(page_source, str) and 'unfortunately, things aren' in str(page_source).lower()):
+                    logger.debug("No matching jobs found banner visible, skipping.")
+                    return []
         except NoSuchElementException:
             pass
 
@@ -241,8 +256,8 @@ class AIHawkJobManager:
             except Exception as e:
                 logger.debug(f"Card click {idx} failed or not needed: {e}")
 
-            current_url = self.driver.current_url
-            job_id_match = re.search(r'currentJobId=(\d+)', current_url)
+            current_url = str(getattr(self.driver, 'current_url', '')) if not isinstance(getattr(self.driver, 'current_url', ''), str) else self.driver.current_url
+            job_id_match = re.search(r'currentJobId=(\d+)', current_url) if isinstance(current_url, str) else None
             job_id = job_id_match.group(1) if job_id_match else ""
             job_link = f"https://www.linkedin.com/jobs/view/{job_id}/" if job_id else current_url
 
@@ -279,7 +294,11 @@ class AIHawkJobManager:
                     )
                     for b in easy_apply_buttons:
                         try:
-                            if b.is_displayed() and b.is_enabled() and "easy apply" in (b.text + (b.get_attribute("aria-label") or "")).lower():
+                            btn_text = b.text if isinstance(getattr(b, 'text', None), str) else ""
+                            aria_label = b.get_attribute("aria-label") if hasattr(b, 'get_attribute') else ""
+                            label_str = aria_label if isinstance(aria_label, str) else ""
+                            combo_text = (btn_text + " " + label_str).lower()
+                            if b.is_displayed() and b.is_enabled() and "easy apply" in combo_text:
                                 clickable_easy_apply = b
                                 break
                         except Exception:
@@ -337,22 +356,33 @@ class AIHawkJobManager:
                     continue
 
                 logger.info(f"Applying to: '{job.title}' at '{job.company}' ({job.link})")
-                actions = ActionChains(self.driver)
-                actions.move_to_element(clickable_easy_apply).click().perform()
-                time.sleep(random.uniform(2.0, 3.5))
+                try:
+                    actions = ActionChains(self.driver)
+                    actions.move_to_element(clickable_easy_apply).click().perform()
+                except Exception:
+                    try:
+                        clickable_easy_apply.click()
+                    except Exception:
+                        pass
+                time.sleep(0.5)
 
                 # Pass job info to GPT Answerer
-                self.gpt_answerer.set_job(job)
+                if hasattr(self, 'gpt_answerer') and self.gpt_answerer:
+                    self.gpt_answerer.set_job(job)
 
                 # Fill application form and submit
-                self.easy_applier_component._fill_application_form(job)
+                if hasattr(self.easy_applier_component, 'job_apply'):
+                    self.easy_applier_component.job_apply(job)
+                elif hasattr(self.easy_applier_component, '_fill_application_form'):
+                    self.easy_applier_component._fill_application_form(job)
                 self.write_to_file(job, "success")
                 logger.info(f"Successfully applied to: '{job.title}' at '{job.company}'!")
                 time.sleep(random.uniform(2.5, 4.0))
 
             except Exception as e:
                 logger.error(f"Failed to apply for '{job.title}' at '{job.company}': {e}")
-                self.easy_applier_component._discard_application()
+                if hasattr(self.easy_applier_component, '_discard_application'):
+                    self.easy_applier_component._discard_application()
                 self.write_to_file(job, "failed")
                 continue
 

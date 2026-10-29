@@ -111,21 +111,24 @@ class UniversalATSApplier:
             logger.debug(f"Pre-apply step note: {e}")
 
     def _fill_identity_fields(self):
-        """Fills First Name, Last Name, Full Name, Email, and Phone."""
+        """Fills First Name, Last Name, Full Name, Email, Phone, LinkedIn, and Portfolio."""
         field_mappings = [
             (["first_name", "first-name", "fname", "given-name"], self.first_name),
             (["last_name", "last-name", "lname", "family-name"], self.last_name),
             (["name", "full_name", "full-name", "_systemfield_name"], self.full_name),
             (["email", "_systemfield_email"], self.email),
             (["phone", "cell", "mobile", "tel", "_systemfield_phone"], self.phone),
+            (["linkedin", "linkedin_profile", "linkedin-profile", "linkedin_url", "linkedinurl"], self.linkedin),
+            (["github", "github_profile", "github-profile", "github_url"], self.github),
+            (["portfolio", "website", "portfolio_url", "portfoliourl"], self.portfolio),
             (["candidate-location", "city", "location"], "Chennai, India")
         ]
 
         for keys, val in field_mappings:
             for k in keys:
                 selectors = [
-                    f"input#{k}", f"input[name='{k}']", f"input[id*='{k}']",
-                    f"input[name*='{k}']", f"input[placeholder*='{k}']"
+                    f"input#{k}", f"input[name='{k}']", f"input[id='{k}']",
+                    f"input[placeholder*='{k}']"
                 ]
                 for sel in selectors:
                     for el in self.driver.find_elements(By.CSS_SELECTOR, sel):
@@ -257,24 +260,33 @@ class UniversalATSApplier:
 
     def _fill_custom_questions(self, job_title: str, company: str):
         """Leverages Gemini Neural Synthesizer for text inputs, textareas, and toggle buttons."""
-        # 1. Handle all text inputs and textareas
-        inputs = self.driver.find_elements(By.XPATH, "//input[@type='text' or @type='email' or @type='tel' or not(@type)] | //textarea")
+        # 1. Handle all text inputs, url inputs, and textareas
+        inputs = self.driver.find_elements(By.XPATH, "//input[@type='text' or @type='email' or @type='tel' or @type='url' or not(@type)] | //textarea")
         for inp in inputs:
             try:
                 if not inp.is_displayed():
                     continue
 
+                # Skip recaptcha tokens and hidden tokens
+                el_id_raw = (inp.get_attribute("id") or "").lower()
+                el_name_raw = (inp.get_attribute("name") or "").lower()
+                if "recaptcha" in el_id_raw or "recaptcha" in el_name_raw or "csrf" in el_name_raw:
+                    continue
+
                 lbl = self._get_label_for_element(inp)
                 lbl_lower = lbl.lower()
-                name_attr = (inp.get_attribute("name") or "").lower()
-                id_attr = (inp.get_attribute("id") or "").lower()
+                name_attr = el_name_raw
+                id_attr = el_id_raw
                 combined = f"{lbl_lower} {name_attr} {id_attr}"
 
+                is_textarea = inp.tag_name.lower() == "textarea"
                 is_name_field = (
-                    any(k in lbl_lower for k in ["full name", "your name", "first name", "last name", "candidate name", "legal name"]) or
-                    lbl_lower.strip() in ["name", "name *", "name*"] or
-                    name_attr in ["name", "full_name", "fullname", "candidate_name", "_systemfield_name"] or
-                    id_attr in ["name", "full_name", "fullname", "_systemfield_name"]
+                    not is_textarea and (
+                        any(k in lbl_lower for k in ["full name", "your name", "first name", "last name", "candidate name", "legal name"]) or
+                        lbl_lower.strip() in ["name", "name *", "name*"] or
+                        name_attr in ["name", "full_name", "fullname", "candidate_name", "_systemfield_name"] or
+                        id_attr in ["name", "full_name", "fullname", "_systemfield_name"]
+                    )
                 ) and "company" not in combined and "user" not in combined
 
                 if "email" in combined or name_attr in ["email", "_systemfield_email"] or id_attr in ["email", "_systemfield_email"]:
@@ -313,12 +325,22 @@ class UniversalATSApplier:
                         inp.clear()
                         InvisibleDotsStealth.human_type(self.driver, inp, self.portfolio)
                         logger.info("Filled Portfolio")
-                elif any(w in combined for w in ["country", "located in", "current location", "residence"]):
+                elif any(w in combined for w in ["country", "location", "located in", "current location", "residence"]):
                     curr = (inp.get_attribute("value") or "").strip()
                     if not curr:
                         inp.clear()
                         InvisibleDotsStealth.human_type(self.driver, inp, "India")
-                        logger.info("Filled Country: India")
+                        time.sleep(0.8)
+                        try:
+                            from selenium.webdriver.common.keys import Keys
+                            opts = self.driver.find_elements(By.XPATH, "//*[@role='option']")
+                            if opts:
+                                InvisibleDotsStealth.human_move_and_click(self.driver, opts[0])
+                            else:
+                                inp.send_keys(Keys.ENTER)
+                        except Exception:
+                            pass
+                        logger.info("Filled Country/Location: India")
                 elif "notice" in combined or "start" in combined:
                     curr = (inp.get_attribute("value") or "").strip()
                     if not curr:
@@ -338,18 +360,21 @@ class UniversalATSApplier:
             except Exception:
                 pass
 
-        # 2. Handle button toggles (Yes / No)
-        buttons = self.driver.find_elements(By.XPATH, "//button[text()='Yes' or text()='No']")
-        for b in buttons:
+        # 2. Handle all button toggles (Yes / No) across question containers
+        containers = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'fieldEntry') or contains(@class, 'ashby-application-form-field-entry')]")
+        for c in containers:
             try:
-                container = b.find_element(By.XPATH, "./ancestor::div[contains(@class, 'fieldEntry') or contains(@class, 'ashby')]")
-                container_text = container.text.lower()
-                if "sponsor" in container_text and b.text == "No":
-                    InvisibleDotsStealth.human_move_and_click(self.driver, b)
-                    logger.info("Clicked 'No' for Sponsorship button.")
-                elif ("authorized" in container_text or "eligible" in container_text or "18" in container_text or "relocate" in container_text or "bay area" in container_text or "on-site" in container_text) and b.text == "Yes":
-                    InvisibleDotsStealth.human_move_and_click(self.driver, b)
-                    logger.info("Clicked 'Yes' for Authorization/Relocation button.")
+                yes_no_btns = c.find_elements(By.XPATH, ".//button[text()='Yes' or text()='No']")
+                if len(yes_no_btns) >= 2:
+                    c_text = c.text.lower()
+                    already_selected = any("active" in (b.get_attribute("class") or "").lower() or b.get_attribute("aria-pressed") == "true" for b in yes_no_btns)
+                    if not already_selected:
+                        target_val = "no" if ("sponsor" in c_text or "visa" in c_text) else "yes"
+                        for b in yes_no_btns:
+                            if b.text.strip().lower() == target_val:
+                                InvisibleDotsStealth.human_move_and_click(self.driver, b)
+                                logger.info(f"Clicked '{b.text.strip()}' for: {c_text[:35]}...")
+                                break
             except Exception:
                 pass
 
@@ -424,6 +449,49 @@ class UniversalATSApplier:
                             InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
                             logger.info(f"Selected Authorization radio: {lbl.text.strip()}")
                             break
+
+                # 8. Source / How did you hear
+                elif any(w in fs_text for w in ["hear about", "source", "how did you hear"]):
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if any(w in lt for w in ["job board", "linkedin", "social media", "internet", "website", "other"]):
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Source radio: {lbl.text.strip()}")
+                            break
+
+                # 9. General Custom Question Radio Fallback
+                else:
+                    is_checked = any(r.is_selected() or "checked" in (r.get_attribute("class") or "").lower() or r.get_attribute("aria-checked") == "true" for r in fs.find_elements(By.XPATH, ".//input[@type='radio'] | .//div[@role='radio']"))
+                    if not is_checked:
+                        chosen = None
+                        if "clearance" in fs_text:
+                            for lbl in labels:
+                                lt = lbl.text.lower()
+                                if "do not have" in lt or "none" in lt or "no" in lt:
+                                    chosen = lbl
+                                    break
+                        elif any(k in fs_text for k in ["relocat", "based in", "located in", "ottawa", "london", "travel"]):
+                            for lbl in labels:
+                                lt = lbl.text.lower()
+                                if "open to relocation" in lt or "open to travel" in lt or "yes" in lt:
+                                    chosen = lbl
+                                    break
+                        elif any(k in fs_text for k in ["hours", "schedule", "timezone", "time zone", "comfortable"]):
+                            for lbl in labels:
+                                lt = lbl.text.lower()
+                                if "yes" in lt or "comfortable" in lt or "agree" in lt:
+                                    chosen = lbl
+                                    break
+                        else:
+                            for lbl in labels:
+                                if "yes" in lbl.text.lower():
+                                    chosen = lbl
+                                    break
+                        if not chosen and labels:
+                            chosen = labels[0]
+                        if chosen:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, chosen)
+                            logger.info(f"Selected general radio option for [{fs_text[:30]}]: {chosen.text.strip()}")
             except Exception:
                 pass
 
@@ -482,12 +550,7 @@ class UniversalATSApplier:
                     if btn.is_displayed() and btn.is_enabled():
                         logger.info(f"Clicking Submit button for '{job_title}' at '{company}'...")
                         InvisibleDotsStealth.human_move_and_click(self.driver, btn)
-                        time.sleep(random.uniform(7.0, 9.0))
 
-                        # Comprehensive Verification Markers
-                        after_url = self.driver.current_url.lower()
-                        page_text = self.driver.find_element(By.TAG_NAME, "body").text.lower()
-                        
                         success_markers = [
                             "successfully submitted",
                             "application was successfully submitted",
@@ -501,40 +564,114 @@ class UniversalATSApplier:
                             "thank you for your interest"
                         ]
 
+                        # Poll for up to 30 seconds for network mutation & transition to finish
+                        for _ in range(15):
+                            time.sleep(2.0)
+                            after_url = self.driver.current_url.lower()
+                            page_text = self.driver.find_element(By.TAG_NAME, "body").text.lower()
+
+                            if any(marker in page_text for marker in success_markers) or any(p in after_url for p in ["/confirmation", "/thanks", "/applied", "/success"]):
+                                shot_post = f"data_folder/output/submissions/post_{company.lower().replace(' ', '_')}_{int(time.time())}.png"
+                                self.driver.save_screenshot(shot_post)
+                                logger.info(f"[UniversalApplier] ✅ VERIFIED TERMINAL SUCCESS: Application confirmed for '{company}'!")
+                                return True
+
+                        # Check for 90-day application cooldown
+                        if "within the last 90 days" in page_text or "limiting applications" in page_text or "already applied" in page_text:
+                            logger.warning(f"[UniversalApplier] Candidate has already applied to {company} within recent window: {page_text[:100]}...")
+                            return False
+
                         shot_post = f"data_folder/output/submissions/post_{company.lower().replace(' ', '_')}_{int(time.time())}.png"
                         self.driver.save_screenshot(shot_post)
+                        after_url = self.driver.current_url.lower()
 
-                        # Check for success indicators
-                        if any(marker in page_text for marker in success_markers) or any(p in after_url for p in ["/confirmation", "/thanks", "/applied", "/success"]):
-                            logger.info(f"[UniversalApplier] ✅ VERIFIED TERMINAL SUCCESS: Application confirmed for '{company}'!")
-                            return True
-
-                        # Self-Healing: Check if Ashby flagged missing required fields
-                        error_links = self.driver.find_elements(By.XPATH, "//*[contains(@class, 'error') or contains(@class, 'Error')]//a[contains(@href, '#')]")
+                        # Self-Healing: Check if Ashby or Lever flagged missing required fields
+                        error_links = self.driver.find_elements(By.XPATH, "//*[contains(@class, 'error') or contains(@class, 'Error') or contains(@class, 'warning')]//a[contains(@href, '#')]")
                         if error_links:
                             logger.info(f"[UniversalApplier] Self-Healing: Found {len(error_links)} flagged questions. Resolving...")
                             for err_link in error_links:
+                                err_text = err_link.text.lower()
                                 href = err_link.get_attribute("href") or ""
                                 if "#" in href:
                                     target_id = href.split("#")[-1]
                                     target_field = self.driver.find_elements(By.ID, target_id)
                                     if target_field:
                                         tf = target_field[0]
-                                        # Look for radio buttons or selects in container
-                                        container = tf.find_element(By.XPATH, "ancestor::div[contains(@class, 'Container') or contains(@class, 'Field') or contains(@class, 'question')]")
-                                        radios = container.find_elements(By.XPATH, ".//input[@type='radio'] | .//div[@role='radio'] | .//button")
-                                        for r in radios:
-                                            r_txt = r.text.lower()
-                                            if "no" in r_txt:
-                                                InvisibleDotsStealth.human_move_and_click(self.driver, r)
-                                                logger.info("Self-healed missing radio with 'No'.")
-                                                break
+                                        tag = tf.tag_name.lower()
+                                        tf_type = (tf.get_attribute("type") or "").lower()
+                                        
+                                        # If it's a URL or text input or textarea
+                                        if tag in ["input", "textarea"]:
+                                            if "linkedin" in err_text or "linkedin" in target_id.lower():
+                                                tf.clear()
+                                                InvisibleDotsStealth.human_type(self.driver, tf, self.linkedin)
+                                                logger.info("Self-healed missing field: LinkedIn URL")
+                                            elif "github" in err_text or "github" in target_id.lower():
+                                                tf.clear()
+                                                InvisibleDotsStealth.human_type(self.driver, tf, self.github)
+                                                logger.info("Self-healed missing field: GitHub URL")
+                                            elif any(p in err_text for p in ["portfolio", "website"]):
+                                                tf.clear()
+                                                InvisibleDotsStealth.human_type(self.driver, tf, self.portfolio)
+                                                logger.info("Self-healed missing field: Portfolio URL")
+                                            elif any(loc in err_text for loc in ["location", "city", "country", "where are you"]):
+                                                tf.clear()
+                                                InvisibleDotsStealth.human_type(self.driver, tf, "Chennai, India")
+                                                logger.info("Self-healed missing field: Location")
+                                            elif tf_type in ["text", "url", ""] or tag == "textarea":
+                                                synth_ans = self.synthesizer.synthesize_answer(err_link.text, job_title, company)
+                                                tf.clear()
+                                                InvisibleDotsStealth.human_type(self.driver, tf, synth_ans)
+                                                logger.info(f"Self-healed text field [{err_link.text}]: {synth_ans[:40]}...")
+                                        
+                                        # Look for radio buttons, checkboxes, or buttons in container or fieldset
+                                        containers = tf.find_elements(By.XPATH, "ancestor::div[contains(@class, 'Container') or contains(@class, 'Field') or contains(@class, 'question') or contains(@class, 'fieldEntry')] | ancestor::fieldset")
+                                        if containers:
+                                            container = containers[0]
+                                            c_lower = container.text.lower()
+                                            buttons_and_radios = container.find_elements(By.XPATH, ".//button | .//input[@type='radio'] | .//div[@role='radio'] | .//label")
+                                            target_choice = "no" if ("sponsor" in c_lower or "visa" in c_lower) else "yes"
+                                            
+                                            clicked = False
+                                            if "clearance" in c_lower:
+                                                for r in buttons_and_radios:
+                                                    if "do not have" in r.text.lower() or "none" in r.text.lower():
+                                                        InvisibleDotsStealth.human_move_and_click(self.driver, r)
+                                                        clicked = True
+                                                        break
+                                            elif "relocat" in c_lower or "based in" in c_lower:
+                                                for r in buttons_and_radios:
+                                                    if "open to relocation" in r.text.lower() or "open to travel" in r.text.lower():
+                                                        InvisibleDotsStealth.human_move_and_click(self.driver, r)
+                                                        clicked = True
+                                                        break
+                                            elif "hear about" in c_lower or "source" in c_lower:
+                                                for r in buttons_and_radios:
+                                                    if any(w in r.text.lower() for w in ["job board", "linkedin", "social media", "internet", "website", "other"]):
+                                                        InvisibleDotsStealth.human_move_and_click(self.driver, r)
+                                                        clicked = True
+                                                        break
+                                            
+                                            if not clicked:
+                                                for r in buttons_and_radios:
+                                                    r_txt = r.text.strip().lower()
+                                                    if r_txt == target_choice or (target_choice == "yes" and ("yes" in r_txt or "comfortable" in r_txt or "agree" in r_txt)):
+                                                        InvisibleDotsStealth.human_move_and_click(self.driver, r)
+                                                        clicked = True
+                                                        break
+                                            
+                                            if not clicked and buttons_and_radios:
+                                                InvisibleDotsStealth.human_move_and_click(self.driver, buttons_and_radios[0])
+                                                clicked = True
+                                                
+                                            if clicked:
+                                                logger.info("Self-healed container choice successfully.")
                             # Re-click Submit after healing
-                            time.sleep(1.0)
+                            time.sleep(1.5)
                             InvisibleDotsStealth.human_move_and_click(self.driver, btn)
                             time.sleep(7.0)
                             page_text_healed = self.driver.find_element(By.TAG_NAME, "body").text.lower()
-                            if any(marker in page_text_healed for marker in success_markers):
+                            if any(marker in page_text_healed for marker in success_markers) or any(p in self.driver.current_url.lower() for p in ["/confirmation", "/thanks", "/applied", "/success"]):
                                 logger.info(f"[UniversalApplier] ✅ VERIFIED TERMINAL SUCCESS (After Self-Healing) for '{company}'!")
                                 return True
 
@@ -548,10 +685,24 @@ class UniversalATSApplier:
 
     def _get_label_for_element(self, element) -> str:
         try:
-            parent = element.find_element(By.XPATH, "ancestor::div[contains(@class, 'field') or contains(@class, 'form-group') or contains(@class, 'select__container') or contains(@class, 'ashby')]")
-            labels = parent.find_elements(By.TAG_NAME, "label")
-            if labels and labels[0].text.strip():
-                return labels[0].text.strip()
+            el_id = element.get_attribute("id")
+            if el_id:
+                lbls = self.driver.find_elements(By.XPATH, f"//label[@for='{el_id}']")
+                if lbls and lbls[0].text.strip():
+                    return lbls[0].text.strip()
+
+            containers = element.find_elements(By.XPATH, "ancestor::div[contains(@class, 'fieldEntry') or contains(@class, 'ashby-application-form-field-entry') or contains(@class, 'form-group') or contains(@class, 'field-container') or contains(@class, 'form-field')]")
+            if containers:
+                c = containers[0]
+                lbls = c.find_elements(By.TAG_NAME, "label")
+                if lbls and lbls[0].text.strip():
+                    return lbls[0].text.strip()
+                headings = c.find_elements(By.XPATH, ".//h1|.//h2|.//h3|.//h4|.//h5|.//legend|.//span[contains(@class, 'label')]")
+                if headings and headings[0].text.strip():
+                    return headings[0].text.strip()
+                lines = [l.strip() for l in c.text.split('\n') if l.strip()]
+                if lines:
+                    return lines[0]
         except Exception:
             pass
         return element.get_attribute("aria-label") or element.get_attribute("placeholder") or element.get_attribute("name") or element.get_attribute("id") or ""

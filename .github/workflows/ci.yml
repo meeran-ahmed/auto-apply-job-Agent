@@ -26,4 +26,4 @@ jobs:
           pip install selenium-stealth
 
       - name: Run Verified Test Suite
-        run: pytest tests/test_omniswarm.py tests/test_utils.py tests/test_job_application_profile.py tests/test_aihawk_authenticator.py tests/test_aihawk_bot_facade.py
+        run: pytest

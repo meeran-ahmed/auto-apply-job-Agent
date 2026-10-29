@@ -139,7 +139,7 @@ class UniversalATSApplier:
                             pass
 
     def _upload_resume(self):
-        """Locates and uploads resume PDF."""
+        """Locates and uploads resume PDF, then waits for React DOM re-render."""
         if not self.resume_path:
             return
         try:
@@ -148,7 +148,8 @@ class UniversalATSApplier:
                 try:
                     fi.send_keys(self.resume_path)
                     logger.info(f"Uploaded resume file: {self.resume_path}")
-                    time.sleep(2.5)
+                    # Allow Ashby / Greenhouse React to finish autofilling & re-rendering DOM
+                    time.sleep(5.5)
                     break
                 except Exception:
                     pass
@@ -255,20 +256,100 @@ class UniversalATSApplier:
         return "Yes"
 
     def _fill_custom_questions(self, job_title: str, company: str):
-        """Leverages Gemini Neural Synthesizer for textareas and open recruiter questions."""
-        textareas = self.driver.find_elements(By.TAG_NAME, "textarea")
-        for ta in textareas:
+        """Leverages Gemini Neural Synthesizer for text inputs, textareas, and toggle buttons."""
+        # 1. Handle all text inputs and textareas
+        inputs = self.driver.find_elements(By.XPATH, "//input[@type='text' or @type='email' or @type='tel' or not(@type)] | //textarea")
+        for inp in inputs:
             try:
-                if not ta.is_displayed():
-                    continue
-                curr = (ta.get_attribute("value") or "").strip()
-                if curr:
+                if not inp.is_displayed():
                     continue
 
-                q_label = self._get_label_for_element(ta)
-                answer = self.synthesizer.synthesize_answer(q_label, job_title, company)
-                InvisibleDotsStealth.human_type(self.driver, ta, answer)
-                logger.info(f"Synthesized recruiter answer for [{q_label[:30]}]: {answer[:60]}...")
+                lbl = self._get_label_for_element(inp)
+                lbl_lower = lbl.lower()
+                name_attr = (inp.get_attribute("name") or "").lower()
+                id_attr = (inp.get_attribute("id") or "").lower()
+                combined = f"{lbl_lower} {name_attr} {id_attr}"
+
+                is_name_field = (
+                    any(k in lbl_lower for k in ["full name", "your name", "first name", "last name", "candidate name", "legal name"]) or
+                    lbl_lower.strip() in ["name", "name *", "name*"] or
+                    name_attr in ["name", "full_name", "fullname", "candidate_name", "_systemfield_name"] or
+                    id_attr in ["name", "full_name", "fullname", "_systemfield_name"]
+                ) and "company" not in combined and "user" not in combined
+
+                if "email" in combined or name_attr in ["email", "_systemfield_email"] or id_attr in ["email", "_systemfield_email"]:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr or "@" not in curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, self.email)
+                        logger.info("Filled Email: " + self.email)
+                elif any(p in combined for p in ["phone", "mobile", "cell", "tel"]):
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, self.phone)
+                        logger.info("Filled Phone: " + self.phone)
+                elif is_name_field:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, self.full_name)
+                        logger.info("Filled Name: " + self.full_name)
+                elif "linkedin" in combined:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, self.linkedin)
+                        logger.info("Filled LinkedIn")
+                elif "github" in combined:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, self.github)
+                        logger.info("Filled GitHub")
+                elif any(w in combined for w in ["portfolio", "website", "personal link", "project url"]):
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, self.portfolio)
+                        logger.info("Filled Portfolio")
+                elif any(w in combined for w in ["country", "located in", "current location", "residence"]):
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, "India")
+                        logger.info("Filled Country: India")
+                elif "notice" in combined or "start" in combined:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, "Immediate (0 days)")
+                elif "salary" in combined or "compensation" in combined or "ctc" in combined:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr:
+                        inp.clear()
+                        InvisibleDotsStealth.human_type(self.driver, inp, "Competitive")
+                else:
+                    curr = (inp.get_attribute("value") or "").strip()
+                    if not curr and lbl:
+                        answer = self.synthesizer.synthesize_answer(lbl, job_title, company)
+                        InvisibleDotsStealth.human_type(self.driver, inp, answer)
+                        logger.info(f"Synthesized recruiter answer for [{lbl[:30]}]: {answer[:50]}...")
+            except Exception:
+                pass
+
+        # 2. Handle button toggles (Yes / No)
+        buttons = self.driver.find_elements(By.XPATH, "//button[text()='Yes' or text()='No']")
+        for b in buttons:
+            try:
+                container = b.find_element(By.XPATH, "./ancestor::div[contains(@class, 'fieldEntry') or contains(@class, 'ashby')]")
+                container_text = container.text.lower()
+                if "sponsor" in container_text and b.text == "No":
+                    InvisibleDotsStealth.human_move_and_click(self.driver, b)
+                    logger.info("Clicked 'No' for Sponsorship button.")
+                elif ("authorized" in container_text or "eligible" in container_text or "18" in container_text or "relocate" in container_text or "bay area" in container_text or "on-site" in container_text) and b.text == "Yes":
+                    InvisibleDotsStealth.human_move_and_click(self.driver, b)
+                    logger.info("Clicked 'Yes' for Authorization/Relocation button.")
             except Exception:
                 pass
 
@@ -387,10 +468,9 @@ class UniversalATSApplier:
     def _execute_submit_and_verify(self, job_title: str, company: str) -> bool:
         """Finds submit button, executes Bézier click, and verifies terminal confirmation."""
         submit_selectors = [
-            "//button[contains(translate(., 'SUBMITAPPLY', 'submitapply'), 'submit application')]",
-            "//button[contains(translate(., 'SUBMITAPPLY', 'submitapply'), 'submit')]",
-            "//button[contains(translate(., 'APPLY', 'apply'), 'apply')]",
-            "//button[@type='submit']",
+            "//button[contains(@class, 'submit') or @type='submit']",
+            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'submit')]",
+            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'apply')]",
             "//input[@type='submit']",
             "//button[contains(@class, 'ashby-application-form-submit-button')]"
         ]

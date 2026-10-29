@@ -81,14 +81,15 @@ Every application submitted by OmniSwarm 2.0 reaches real ATS confirmation state
 
 | Company | Role | ATS Platform | Verified Terminal State & Inbox Receipt |
 | :--- | :--- | :--- | :--- |
-| **GitLab** | Intermediate Backend Engineer, India | `Greenhouse ATS` | ✅ **Email Delivered**: *"Thank you for applying to GitLab"* |
-| **Tavily AI** | Forward Deployed Engineer, Enterprise | `Greenhouse ATS` | ✅ **Email Delivered**: *"Thank you for applying to Tavily"* |
-| **Jumio** | Sales Solutions Engineer | `Greenhouse ATS` | ✅ **Email Delivered**: *"Thank you for applying to Jumio"* |
-| **Cognition** | Forward Deployed Engineer - US | `Ashby ATS` | ✅ **Verified**: *"Success: Your application was successfully submitted"* |
-| **Cognition** | Forward Deployed Engineer - Europe | `Ashby ATS` | ✅ **Verified**: *"Success: Your application was successfully submitted"* |
-| **Modal** | Forward Deployed Engineer - ML | `Ashby ATS` | ✅ **Verified**: *"Success: Your application was successfully submitted"* |
-| **LangChain** | FullStack Engineer, AI Observability (LangSmith) | `Ashby ATS` | ✅ **Verified**: *"Success: Your application was successfully submitted"* |
-| **LangChain** | Senior Fullstack Engineer, AI Observability (SF) | `Ashby ATS` | ✅ **Verified**: *"Success: Your application was successfully submitted"* |
+| **Modal** | Forward Deployed Engineer - ML | `Ashby ATS` | 📩 **Email Received**: *"Thank you for applying to Modal!"* |
+| **LangChain** | FullStack Engineer, AI Observability (LangSmith) | `Ashby ATS` | 📩 **Email Received**: *"Thank you for applying to LangChain"* |
+| **GitLab** | Intermediate Backend Engineer, India | `Greenhouse ATS` | 📩 **Email Received**: *"Thank you for applying to GitLab"* |
+| **Tavily AI** | Forward Deployed Engineer, Enterprise | `Greenhouse ATS` | 📩 **Email Received**: *"Thank you for applying to Tavily"* |
+| **Jumio** | Sales Solutions Engineer | `Greenhouse ATS` | 📩 **Email Received**: *"Thank you for applying to Jumio"* |
+| **RunPod** | Forward Deployed Engineer APAC | `Ashby ATS` | ✅ **Verified Terminal Success**: *"Your application was successfully submitted"* |
+| **Firecrawl** | Forward Deployed Engineer | `Ashby ATS` | ✅ **Verified Terminal Success**: *"Your application was successfully submitted"* |
+| **Cognition** | Forward Deployed Engineer - US | `Ashby ATS` | ✅ **Verified Terminal Success**: *"Your application was successfully submitted"* |
+| **Cognition** | Forward Deployed Engineer - Europe | `Ashby ATS` | ✅ **Verified Terminal Success**: *"Your application was successfully submitted"* |
 
 > **Inbox Verification Confirmed**: Automated confirmation emails from Greenhouse and Ashby-powered hiring portals are arriving in real time into `meeranahmed17@gmail.com`. Zero ghost applications, zero false positives.
 

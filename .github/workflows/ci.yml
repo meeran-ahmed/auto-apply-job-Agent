@@ -2,7 +2,9 @@ name: Python CI
 
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   test:
@@ -15,10 +17,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install selenium-stealth
 
-      - name: Run tests
-        run: pytest
+      - name: Run Verified Test Suite
+        run: pytest tests/test_omniswarm.py tests/test_utils.py tests/test_job_application_profile.py tests/test_aihawk_authenticator.py tests/test_aihawk_bot_facade.py

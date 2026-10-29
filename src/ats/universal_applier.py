@@ -44,7 +44,14 @@ class UniversalATSApplier:
         """
         logger.info(f"[UniversalApplier] Initiating stealth application for '{job_title}' at '{company}'...")
         try:
-            self.driver.get(target_url)
+            # Auto-normalize direct application URLs for Ashby and Lever
+            clean_url = target_url.strip()
+            if "ashbyhq.com" in clean_url and not clean_url.endswith("/application"):
+                clean_url = clean_url.rstrip("/") + "/application"
+            elif "lever.co" in clean_url and not clean_url.endswith("/apply"):
+                clean_url = clean_url.rstrip("/") + "/apply"
+
+            self.driver.get(clean_url)
             time.sleep(random.uniform(3.0, 4.5))
 
             # Handle intermediate apply buttons
@@ -265,28 +272,115 @@ class UniversalATSApplier:
             except Exception:
                 pass
 
-        # Handle Ashby and general radio options for sponsorship, authorization, etc.
+        # Handle Ashby and general radio groups (EEO, Veteran, Disability, Sponsorship, Authorization)
+        fieldsets = self.driver.find_elements(By.XPATH, "//fieldset | //div[contains(@class, 'radio-group')] | //div[contains(@class, 'RadioGroup')]")
+        for fs in fieldsets:
+            try:
+                fs_text = fs.text.lower()
+                labels = fs.find_elements(By.TAG_NAME, "label")
+                if not labels:
+                    continue
+
+                # 1. Veteran Status
+                if "veteran" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if "not a protected veteran" in lt or "decline" in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Veteran radio: {lbl.text.strip()}")
+                            break
+
+                # 2. Disability Status
+                elif "disability" in fs_text or "handicap" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if "don't have" in lt or "do not have" in lt or "no" in lt or "decline" in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Disability radio: {lbl.text.strip()}")
+                            break
+
+                # 3. Gender
+                elif "gender" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if "male" in lt or "man" in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Gender radio: {lbl.text.strip()}")
+                            break
+
+                # 4. Hispanic / Latino
+                elif "hispanic" in fs_text or "latino" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if lt == "no" or "not hispanic" in lt or "no," in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Hispanic/Latino radio: {lbl.text.strip()}")
+                            break
+
+                # 5. Race / Ethnicity
+                elif "race" in fs_text or "ethnicity" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if "asian" in lt or "decline" in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Race radio: {lbl.text.strip()}")
+                            break
+
+                # 6. Sponsorship
+                elif "sponsor" in fs_text or "visa" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if lt == "no" or "no," in lt or "do not" in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Sponsorship radio: {lbl.text.strip()}")
+                            break
+
+                # 7. Work Authorization / 18+
+                elif "authorized" in fs_text or "eligible" in fs_text or "18" in fs_text:
+                    for lbl in labels:
+                        lt = lbl.text.lower()
+                        if lt == "yes" or "yes," in lt:
+                            InvisibleDotsStealth.human_move_and_click(self.driver, lbl)
+                            logger.info(f"Selected Authorization radio: {lbl.text.strip()}")
+                            break
+            except Exception:
+                pass
+
+        # Also handle any standard isolated radio inputs
         for radio in self.driver.find_elements(By.XPATH, "//input[@type='radio'] | //div[@role='radio']"):
             try:
                 label_text = self._get_label_for_element(radio).lower()
                 r_val = (radio.get_attribute("value") or radio.text or "").lower()
-                if "sponsor" in label_text:
-                    if "no" in r_val:
-                        InvisibleDotsStealth.human_move_and_click(self.driver, radio)
-                elif "authorized" in label_text or "eligible" in label_text:
-                    if "yes" in r_val:
-                        InvisibleDotsStealth.human_move_and_click(self.driver, radio)
+                if "sponsor" in label_text and "no" in r_val:
+                    InvisibleDotsStealth.human_move_and_click(self.driver, radio)
+                elif ("authorized" in label_text or "eligible" in label_text) and "yes" in r_val:
+                    InvisibleDotsStealth.human_move_and_click(self.driver, radio)
             except Exception:
                 pass
 
     def _check_compliance_boxes(self):
         """Auto-checks mandatory compliance, GDPR, and data policy checkboxes."""
+        # 1. Check HTML input checkboxes
         checkboxes = self.driver.find_elements(By.XPATH, "//input[@type='checkbox']")
         for cb in checkboxes:
             try:
                 if not cb.is_selected():
-                    InvisibleDotsStealth.human_move_and_click(self.driver, cb)
+                    # Click parent label or checkbox itself
+                    try:
+                        parent = cb.find_element(By.XPATH, "./..")
+                        InvisibleDotsStealth.human_move_and_click(self.driver, parent)
+                    except Exception:
+                        InvisibleDotsStealth.human_move_and_click(self.driver, cb)
                     logger.info("Checked compliance checkbox.")
+            except Exception:
+                pass
+
+        # 2. Check Ashby custom checkbox labels (e.g. 'I agree')
+        agree_labels = self.driver.find_elements(By.XPATH, "//label[contains(translate(., 'AGREE', 'agree'), 'agree') or contains(translate(., 'CONSENT', 'consent'), 'consent')]")
+        for al in agree_labels:
+            try:
+                InvisibleDotsStealth.human_move_and_click(self.driver, al)
+                logger.info(f"Checked consent label: {al.text.strip()[:30]}")
             except Exception:
                 pass
 

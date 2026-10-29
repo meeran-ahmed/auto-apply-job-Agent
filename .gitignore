@@ -123,7 +123,7 @@ env.bak/
 venv.bak/
 
 # GitHub
-.github/
+#.github/
 
 # MacOS
 .DS_Store

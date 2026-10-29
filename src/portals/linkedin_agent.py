@@ -28,6 +28,8 @@ class LinkedInAgent:
         self.reticle_verifier = ReticleVerifier()
 
     def search_and_apply(self, keyword: str = "Full Stack Developer", location: str = "Remote", max_jobs: int = 5) -> int:
+        self._ensure_authenticated()
+
         encoded_kw = urllib.parse.quote(keyword)
         encoded_loc = urllib.parse.quote(location)
         search_url = f"https://www.linkedin.com/jobs/search/?keywords={encoded_kw}&location={encoded_loc}&f_AL=true&f_WT=2&sortBy=DD"
@@ -35,6 +37,39 @@ class LinkedInAgent:
 
         self.driver.get(search_url)
         StealthDriver.random_sleep(4.0, 6.0)
+
+    def _ensure_authenticated(self):
+        """Injects li_at session cookie from secrets.yaml if present to bypass all login walls."""
+        import yaml
+        from pathlib import Path
+        secrets_file = Path("data_folder/secrets.yaml")
+        li_at_token = None
+        if secrets_file.exists():
+            try:
+                with open(secrets_file, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                    li_at_token = data.get("linkedin_li_at") or data.get("li_at")
+            except Exception:
+                pass
+
+        if li_at_token:
+            try:
+                logger.info("[LinkedInAgent] Injecting authenticated li_at session cookie...")
+                self.driver.get("https://www.linkedin.com")
+                time.sleep(1.5)
+                self.driver.add_cookie({
+                    "name": "li_at",
+                    "value": str(li_at_token).strip(),
+                    "domain": ".linkedin.com",
+                    "path": "/",
+                    "secure": True,
+                    "httpOnly": True
+                })
+                self.driver.get("https://www.linkedin.com/feed/")
+                time.sleep(2.5)
+                logger.info(f"[LinkedInAgent] Authenticated session established! Current page: {self.driver.title}")
+            except Exception as e:
+                logger.warning(f"[LinkedInAgent] Error injecting li_at cookie: {e}")
 
         job_links = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/jobs/view/')]")
         logger.info(f"[LinkedInAgent] Found {len(job_links)} job links on page.")

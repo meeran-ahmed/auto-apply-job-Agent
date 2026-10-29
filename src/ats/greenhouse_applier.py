@@ -23,14 +23,15 @@ class GreenhouseApplier:
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "form#application_form, #apply_form, form"))
             )
+            time.sleep(2)
 
             pi = self.profile_data.get("personal_information", {})
             first_name = str(pi.get("name", "Meeran")).strip()
             last_name = str(pi.get("surname", "Ahmed R.")).strip()
             full_name = f"{first_name} {last_name}".strip()
             email = str(pi.get("email", "meeranahmed17@gmail.com")).strip()
-            phone = str(pi.get("phone", "8015186448")).strip()
-            city = str(pi.get("city", "Vaniyambadi")).strip()
+            phone = str(pi.get("phone", "+91 8015186448")).strip()
+            city = str(pi.get("city", "Chennai")).strip()
             portfolio = "https://meeran-portfolio.antideploy.app"
             github = str(pi.get("github", "https://github.com/meeranahmed")).strip()
             linkedin = str(pi.get("linkedin", "https://www.linkedin.com/in/meeran-ahmed-r/")).strip()
@@ -42,8 +43,21 @@ class GreenhouseApplier:
             self._fill_field(["email"], email)
             self._fill_field(["phone", "cell", "mobile"], phone)
 
-            # Location / City
-            self._fill_field(["location", "city"], f"{city}, Tamil Nadu, India")
+            # Country dropdown
+            self._fill_react_select("country", "India")
+
+            # Candidate Location (React Select or text)
+            try:
+                loc_inputs = self.driver.find_elements(By.ID, "candidate-location")
+                for loc_input in loc_inputs:
+                    loc_input.send_keys("Chennai, India")
+                    time.sleep(1)
+                    loc_input.send_keys(Keys.ARROW_DOWN)
+                    loc_input.send_keys(Keys.ENTER)
+                    loc_input.send_keys(Keys.ESCAPE)
+                    logger.info("Set candidate-location: Chennai, India")
+            except Exception as e:
+                logger.debug(f"candidate-location error: {e}")
 
             # 3. Upload Resume
             if self.resume_path:
@@ -61,23 +75,58 @@ class GreenhouseApplier:
                 except Exception as e:
                     logger.debug(f"Resume upload note: {e}")
 
-            # 4. Fill Links (LinkedIn, Portfolio, GitHub)
-            all_inputs = self.driver.find_elements(By.CSS_SELECTOR, "input[type='text'], input[type='url'], input:not([type])")
-            for inp in all_inputs:
+            # 4. Fill Links (LinkedIn, Portfolio, GitHub) and text inputs by Label
+            labels = self.driver.find_elements(By.TAG_NAME, "label")
+            for label_el in labels:
                 try:
-                    label = self._get_label_for_element(inp)
-                    val = (inp.get_attribute("value") or "").strip()
-                    if not val:
-                        if "linkedin" in label:
-                            inp.send_keys(linkedin)
-                        elif any(k in label for k in ["portfolio", "website", "personal link", "project"]):
-                            inp.send_keys(portfolio)
-                        elif "github" in label:
-                            inp.send_keys(github)
-                except Exception:
-                    pass
+                    for_id = label_el.get_attribute("for")
+                    lt = label_el.text.strip().lower()
+                    if not for_id or not lt:
+                        continue
 
-            # 5. Handle Dropdowns / Selects (Authorizations, Demographics, etc.)
+                    # Check if matching input exists
+                    target_inputs = self.driver.find_elements(By.ID, for_id)
+                    if not target_inputs:
+                        continue
+                    inp = target_inputs[0]
+
+                    # Skip file, submit, hidden inputs
+                    inp_type = (inp.get_attribute("type") or "text").lower()
+                    if inp_type in ["file", "submit", "hidden", "button"]:
+                        continue
+
+                    val = (inp.get_attribute("value") or "").strip()
+
+                    # React-Select combobox
+                    role = inp.get_attribute("role") or ""
+                    classes = inp.get_attribute("class") or ""
+                    if role == "combobox" or "select__input" in classes or "select-shell" in classes:
+                        self._handle_react_select(inp, lt)
+                        continue
+
+                    # Standard text/url inputs
+                    if not val and inp_type in ["text", "url", "tel"]:
+                        if "linkedin" in lt:
+                            inp.send_keys(linkedin)
+                        elif any(k in lt for k in ["portfolio", "website", "personal link", "personal website", "project"]):
+                            inp.send_keys(portfolio)
+                        elif "github" in lt:
+                            inp.send_keys(github)
+                        elif any(k in lt for k in ["prefer us to use", "preferred name", "nickname"]):
+                            inp.send_keys(first_name)
+                        elif "gitlab username" in lt:
+                            inp.send_keys("meeranahmed")
+                        elif any(k in lt for k in ["skills", "technologies", "languages"]):
+                            inp.send_keys("Python, React, Node.js, TypeScript, PostgreSQL, Implementation Engineering")
+                        else:
+                            # Contextual answer
+                            ans = self._generate_answer(lt, job_title)
+                            inp.send_keys(ans)
+                        time.sleep(0.3)
+                except Exception:
+                    continue
+
+            # 5. Handle standard HTML selects (if any legacy boards)
             selects = self.driver.find_elements(By.TAG_NAME, "select")
             for sel_el in selects:
                 try:
@@ -92,19 +141,32 @@ class GreenhouseApplier:
                     matched = False
                     for opt in select.options:
                         ot = opt.text.lower()
-                        # Visa / Legal authorization
-                        if "authorized" in label or "legally" in label:
+                        if "country" in label and "india" in ot:
+                            select.select_by_visible_text(opt.text)
+                            matched = True
+                            break
+                        if any(w in label for w in ["authorized", "legally", "eligible"]):
                             if "yes" in ot or "authorized" in ot:
                                 select.select_by_visible_text(opt.text)
                                 matched = True
                                 break
-                        elif "sponsorship" in label or "require" in label:
-                            if "yes" in ot:
+                        elif any(w in label for w in ["sponsorship", "require", "sponsor"]):
+                            if "no" in ot:
                                 select.select_by_visible_text(opt.text)
                                 matched = True
                                 break
                         elif "gender" in label:
                             if "male" in ot:
+                                select.select_by_visible_text(opt.text)
+                                matched = True
+                                break
+                        elif any(w in label for w in ["hispanic", "latino"]):
+                            if "no" in ot:
+                                select.select_by_visible_text(opt.text)
+                                matched = True
+                                break
+                        elif "veteran" in label:
+                            if "not" in ot:
                                 select.select_by_visible_text(opt.text)
                                 matched = True
                                 break
@@ -121,7 +183,7 @@ class GreenhouseApplier:
                 except Exception:
                     pass
 
-            # 6. Handle custom textareas & remaining questions
+            # 6. Handle custom textareas
             textareas = self.driver.find_elements(By.TAG_NAME, "textarea")
             for ta in textareas:
                 try:
@@ -136,7 +198,19 @@ class GreenhouseApplier:
                 except Exception:
                     pass
 
-            # 7. Submit Application
+            # 7. Check all compliance, consent, and agreement checkboxes
+            checkboxes = self.driver.find_elements(By.XPATH, "//input[@type='checkbox']")
+            for cb in checkboxes:
+                try:
+                    if not cb.is_selected():
+                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", cb)
+                        time.sleep(0.2)
+                        self.driver.execute_script("arguments[0].click();", cb)
+                        logger.info("Checked compliance / terms checkbox.")
+                except Exception:
+                    pass
+
+            # 8. Submit Application
             time.sleep(2)
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(1.5)
@@ -147,8 +221,7 @@ class GreenhouseApplier:
                 "//input[@type='submit'] | "
                 "//input[contains(@value, 'Submit') or contains(@value, 'Apply')] | "
                 "//button[@type='submit'] | "
-                "//button[contains(@id, 'submit') or contains(@class, 'submit')] | "
-                "//a[contains(@class, 'submit') or contains(@class, 'apply') and contains(@role, 'button')]"
+                "//button[contains(@id, 'submit') or contains(@class, 'submit')]"
             )
             for btn in submit_elements:
                 try:
@@ -156,39 +229,24 @@ class GreenhouseApplier:
                         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
                         time.sleep(1)
                         self.driver.execute_script("arguments[0].click();", btn)
-                        logger.info("Clicked Greenhouse / Universal Submit button!")
-                        time.sleep(4)
+                        logger.info("Clicked Greenhouse Submit button!")
+                        time.sleep(7)
 
                         # Strict Submission Verification
                         after_url = self.driver.current_url.lower()
                         page_text = self.driver.find_element(By.TAG_NAME, "body").text.lower()
                         success_keywords = [
                             "thank you for applying", "application submitted", 
-                            "received your application", "application has been submitted", 
-                            "thank you for your interest", "we have received your resume"
+                            "received your application", "application has been received", 
+                            "thank you for your interest", "we have received your application"
                         ]
 
                         if any(kw in page_text for kw in success_keywords) or any(p in after_url for p in ["/confirmation", "/thanks", "/applied", "/success"]):
-                            logger.info("[Greenhouse] VERIFIED SUCCESS: Application confirmation detected!")
+                            logger.info("[Greenhouse] VERIFIED SUCCESS: Application confirmation received!")
                             return True
 
-                        # Check for blocking factors
-                        has_turnstile = bool(self.driver.find_elements(By.XPATH, "//iframe[contains(@src, 'turnstile') or contains(@src, 'recaptcha') or contains(@src, 'hcaptcha')] | //div[contains(@class, 'turnstile')]"))
-                        has_errors = bool(self.driver.find_elements(By.XPATH, "//*[contains(@class, 'error') or contains(text(), 'required field') or contains(text(), 'Please fill out')]"))
-
-                        if has_turnstile:
-                            logger.warning("[Greenhouse] Form blocked by Cloudflare Turnstile / CAPTCHA anti-bot verification.")
-                            return False
-                        elif has_errors:
-                            logger.warning("[Greenhouse] Form blocked: unfulfilled mandatory company questions.")
-                            return False
-                        else:
-                            # If URL navigated away from job listing page
-                            if "/jobs/" not in after_url:
-                                logger.info("[Greenhouse] Navigated away from job page to confirmation.")
-                                return True
-                            logger.warning("[Greenhouse] Form did not transition to confirmation page. Submission unconfirmed.")
-                            return False
+                        logger.warning(f"[Greenhouse] Form did not transition to confirmation page. Current URL: {after_url}")
+                        return False
                 except Exception:
                     continue
 
@@ -198,6 +256,57 @@ class GreenhouseApplier:
         except Exception as e:
             logger.error(f"Error applying on Greenhouse: {e}")
             return False
+
+    def _handle_react_select(self, element, label: str):
+        try:
+            val = ""
+            if "country" in label or "residence" in label or "located" in label:
+                val = "India"
+            elif any(w in label for w in ["language", "speak"]):
+                val = "English"
+            elif any(w in label for w in ["gender", "identify"]):
+                val = "Male"
+            elif any(w in label for w in ["hispanic", "latino"]):
+                val = "No"
+            elif "veteran" in label:
+                val = "I am not a protected veteran"
+            elif any(w in label for w in ["disability", "physical"]):
+                val = "No"
+            elif any(w in label for w in ["authorized", "eligible", "authorization", "evidence"]):
+                val = "Yes"
+            elif any(w in label for w in ["sponsorship", "require", "sponsor"]):
+                val = "No"
+            elif any(w in label for w in ["pronoun"]):
+                val = "He/Him"
+            elif any(w in label for w in ["how did you hear", "source"]):
+                val = "LinkedIn"
+            elif any(w in label for w in ["previously worked", "employed by", "restrictions", "agreement"]):
+                val = "No"
+            elif any(w in label for w in ["read", "policy", "terms", "agree", "consent", "privacy"]):
+                val = "Yes"
+            else:
+                val = "Yes"
+
+            if val:
+                element.send_keys(val)
+                time.sleep(0.5)
+                element.send_keys(Keys.ENTER)
+                element.send_keys(Keys.ESCAPE)
+                logger.info(f"Set React-Select for '{label[:30]}' to '{val}'")
+        except Exception as e:
+            logger.debug(f"React select error: {e}")
+
+    def _fill_react_select(self, field_id: str, value: str):
+        try:
+            els = self.driver.find_elements(By.ID, field_id)
+            for el in els:
+                el.send_keys(value)
+                time.sleep(0.5)
+                el.send_keys(Keys.ENTER)
+                el.send_keys(Keys.ESCAPE)
+                logger.info(f"Dropdown '{field_id}' set to: {value}")
+        except Exception as e:
+            logger.debug(f"Dropdown '{field_id}' note: {e}")
 
     def _fill_field(self, name_variants: list, value: str):
         for name in name_variants:
@@ -237,12 +346,28 @@ class GreenhouseApplier:
                 pass
 
         q = question.lower()
-        if any(w in q for w in ["why", "interest", "reason", "cover letter"]):
+        if any(w in q for w in ["notice", "availability", "when can you start", "start date"]):
+            return "Immediate (0 days notice, ready to join right away)."
+        if any(w in q for w in ["salary", "compensation", "expectation", "ctc"]):
+            return "Negotiable based on company standards and role responsibilities."
+        if any(w in q for w in ["location", "relocate", "hybrid", "remote", "chennai", "bangalore"]):
+            return "Fully available for remote work as well as hybrid setups in Chennai or Bangalore."
+        if any(w in q for w in ["implementation", "deploy", "onboarding", "fde", "forward"]):
             return (
-                f"I am deeply excited to apply for the {job_title} role. With over 2 years of hands-on experience "
-                "architecting production full-stack web platforms using React, Node.js, and TypeScript, I have built "
-                "scalable multi-tenant solutions like Kamyaab Academy and Vexa AI. I look forward to contributing "
-                "high-performance, reliable code to your team."
+                "As an Implementation Executive at Pathfinder Enterprises Solutions, I led end-to-end "
+                "deployment of AI-based retail software solutions, customer onboarding, payment gateway "
+                "integrations, and cross-functional technical troubleshooting, ensuring fast time-to-value."
+            )
+        if any(w in q for w in ["ai", "vibe", "claude", "cursor", "llm", "tools"]):
+            return (
+                "I actively leverage AI-augmented development workflows (Claude Code, Cursor, LLMs) to build "
+                "and deploy production-ready full-stack applications with high speed, clean architecture, and strict testing."
+            )
+        if any(w in q for w in ["why", "interest", "reason", "cover letter", "about you"]):
+            return (
+                f"I am deeply excited to apply for the {job_title} role. With hands-on experience in full-stack development "
+                "(React, Node.js, TypeScript, PostgreSQL) and software implementation, I have built production platforms like "
+                "Kamyaab Academy (1,000+ users) and Vexa AI. I look forward to contributing impactful, scalable solutions."
             )
         if any(w in q for w in ["project", "achievement", "proud"]):
             return (

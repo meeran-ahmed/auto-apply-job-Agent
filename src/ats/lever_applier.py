@@ -165,4 +165,13 @@ class LeverApplier:
                     return ans
             except Exception:
                 pass
+        q = (question or "").lower()
+        if any(w in q for w in ["notice", "start", "availability"]):
+            return "Immediate (0 days notice)."
+        if any(w in q for w in ["salary", "compensation", "ctc"]):
+            return "Negotiable based on company standards."
+        if any(w in q for w in ["implementation", "fde", "forward", "deploy", "onboarding"]):
+            return "As an Implementation Executive at Pathfinder Enterprises Solutions, I specialized in deploying AI software solutions, onboarding clients, and integrating payment systems."
+        if any(w in q for w in ["vibe", "ai", "claude", "cursor"]):
+            return "I build rapid full-stack applications leveraging modern AI-assisted engineering tools like Cursor, Claude Code, and LLMs."
         return f"With over 2 years of experience building modern web platforms in React, Node.js, and TypeScript, I am fully equipped to drive high impact in the {job_title} role."

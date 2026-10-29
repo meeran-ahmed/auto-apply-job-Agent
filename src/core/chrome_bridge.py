@@ -20,7 +20,11 @@ class ChromeBridge:
     def __init__(self, port: int = 9222):
         self.port = port
         self.debug_url = f"http://127.0.0.1:{self.port}"
-        self.user_data_dir = Path(os.environ.get("LOCALAPPDATA", "C:\\Users\\AI EDITION\\AppData\\Local")) / "Google" / "Chrome" / "JobAgentData"
+        local_app_data = os.environ.get("LOCALAPPDATA", "C:\\Users\\AI EDITION\\AppData\\Local")
+        if "AI EDITION" in local_app_data:
+            self.user_data_dir = Path("C:/Users/AIEDIT~1/AppData/Local/Google/Chrome/JobAgentData")
+        else:
+            self.user_data_dir = Path(local_app_data) / "Google" / "Chrome" / "JobAgentData"
 
     def is_chrome_debugging_ready(self) -> bool:
         """
@@ -41,7 +45,11 @@ class ChromeBridge:
         then attaches Selenium directly to the live session.
         """
         if not self.is_chrome_debugging_ready():
-            logger.info(f"[ChromeBridge] Starting Chrome with debugging port {self.port}...")
+            logger.info(f"[ChromeBridge] Cleaning background processes & starting Chrome with debugging port {self.port}...")
+            # Clean up stale chrome background processes that might lock user-data-dir
+            subprocess.run(["powershell", "-Command", "Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue"], capture_output=True)
+            time.sleep(1.0)
+
             chrome_exec = self._find_chrome_executable()
             if not chrome_exec or not chrome_exec.exists():
                 raise RuntimeError("Google Chrome executable not found on system!")
@@ -56,8 +64,8 @@ class ChromeBridge:
             ]
             subprocess.Popen(cmd)
             
-            # Wait up to 8 seconds for CDP to become ready
-            for _ in range(8):
+            # Wait up to 10 seconds for CDP to become ready
+            for _ in range(10):
                 if self.is_chrome_debugging_ready():
                     break
                 time.sleep(1)
@@ -72,21 +80,26 @@ class ChromeBridge:
                 logger.info(f"[ChromeBridge] Successfully attached to live Chrome session! Current URL: {driver.current_url}")
                 return driver
             except Exception as e:
-                logger.warning(f"[ChromeBridge] CDP attachment failed ({e}). Falling back to standalone stealth driver...")
+                logger.warning(f"[ChromeBridge] CDP attachment failed ({e}). Falling back to persistent profile driver...")
 
-        # Fallback: Launch dedicated standalone stealth Chrome driver
-        logger.info("[ChromeBridge] Initializing dedicated standalone Chrome driver with stealth profile...")
-        from src.utils import chrome_browser_options
-        options = chrome_browser_options(custom_profile_name="job_agent_stealth_profile")
+        # Fallback: Launch standalone Chrome driver with persistent JobAgentData profile
+        logger.info(f"[ChromeBridge] Initializing standalone Chrome driver with persistent profile: {self.user_data_dir}...")
+        options = webdriver.ChromeOptions()
+        options.add_argument(f"--user-data-dir={str(self.user_data_dir)}")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-default-browser-check")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
         return driver
 
     def _find_chrome_executable(self) -> Path:
         candidates = [
-            Path(os.environ.get("PROGRAMFILES", "C:\\Program Files")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-            Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-            Path(os.environ.get("LOCALAPPDATA", "C:\\Users\\AI EDITION\\AppData\\Local")) / "Google" / "Chrome" / "Application" / "chrome.exe"
+            Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
+            Path("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"),
+            Path(os.environ.get("LOCALAPPDATA", "C:/Users/AI EDITION/AppData/Local")) / "Google" / "Chrome" / "Application" / "chrome.exe"
         ]
         for p in candidates:
             if p.exists():

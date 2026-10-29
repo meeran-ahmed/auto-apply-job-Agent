@@ -24,7 +24,12 @@ class FitEvaluator:
         self.target_keywords = [
             "full stack", "fullstack", "frontend", "front-end", "backend",
             "back-end", "software engineer", "developer", "python", "react",
-            "web developer", "software developer"
+            "web developer", "software developer", "forward deployed",
+            "forward deployed engineer", "implementation engineer",
+            "implementation executive", "implementation specialist",
+            "technical solutions", "solutions engineer", "deployment engineer",
+            "vibe coding", "vibe coder", "ai engineer", "ai developer",
+            "prompt engineer", "product engineer"
         ]
 
     def _load_candidate_profile(self) -> Dict[str, Any]:
@@ -54,7 +59,9 @@ class FitEvaluator:
         defaults = [
             "python", "javascript", "typescript", "react", "react.js",
             "fastapi", "django", "postgresql", "sql", "git", "rest", "api",
-            "docker", "html", "css", "tailwind", "node", "nodejs"
+            "docker", "html", "css", "tailwind", "node", "nodejs", "next.js",
+            "express", "implementation", "deployment", "integration", "onboarding",
+            "ai", "llm", "automation"
         ]
         for d in defaults:
             if d not in skills:
@@ -90,8 +97,11 @@ class FitEvaluator:
             if re.search(r'\b' + re.escape(skill) + r'\b', desc_lower) or re.search(r'\b' + re.escape(skill) + r'\b', t_lower):
                 matched_skills.append(skill)
 
-        # Scale skills: 5+ matched skills = full 40 pts
-        skill_score = min(40, len(matched_skills) * 8)
+        # Scale skills: if it's a verified target role, grant baseline 20 pts + 8 per matched skill up to 40
+        if is_relevant_role:
+            skill_score = max(20, min(40, 20 + len(matched_skills) * 6))
+        else:
+            skill_score = min(40, len(matched_skills) * 8)
 
         # 3. Experience & Role Scope Match (Max 30 points)
         exp_score = 30
@@ -108,15 +118,15 @@ class FitEvaluator:
         # 4. Remote / Location Alignment (Max 30 points)
         loc_score = 30
         combined_text = f"{title} {location} {description}".lower()
-        if "remote" in combined_text or "anywhere" in combined_text or "work from home" in combined_text:
+        if any(term in combined_text for term in ["remote", "anywhere", "work from home", "chennai", "bangalore", "bengaluru", "tamil nadu", "karnataka", "india"]):
             loc_score = 30
         elif "hybrid" in combined_text:
-            loc_score = 20
+            loc_score = 25
         else:
             loc_score = 15
 
         total_score = skill_score + exp_score + loc_score
-        is_fit = total_score >= 75
+        is_fit = total_score >= 70
 
         details = {
             "score": total_score,
